@@ -44,7 +44,7 @@ You can upgrade the submodules using this command
 ```bash
 git submodule update --remote --merge
 
-git add BioNextflow
+git add BioNextflow3
 git commit -m "upgrading bioNextflow"
 git push
 ```
