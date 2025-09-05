@@ -28,16 +28,17 @@ process CELLRANGER_COUNT {
         ln -s ${pairs[1]} ${prefix}_S1_L001_R2_001.fastq.gz
     fi
         
-	cellranger count ${args} --id=${prefix} \
+    cellranger count ${args} --id=${prefix} \
                    --transcriptome=${index} \
                    --fastqs=./ \
                    --sample=${prefix} \
                    --localcores=${task.cpus} \
                    --localmem=${task.memory.toGiga()} 
     
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        cellranger: \$(echo \$( cellranger --version 2>&1) | sed 's/^.*[^0-9]\\([0-9]*\\.[0-9]*\\.[0-9]*\\).*\$/\\1/' )
-    END_VERSIONS
+        cellranger: \$(cellranger --version | cut -d "-" -f 2) 
+END_VERSIONS
    """
 }
