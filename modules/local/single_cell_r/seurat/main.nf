@@ -162,7 +162,7 @@ ${script_anno}
 # save seurat object
 saveRDS(seurObj, file = "${prefix}.rds")
 
-out_file <- " versions.yml"
+out_file <- "versions.yml"
 
 versions <- c(
   "    ${task.process}:",
