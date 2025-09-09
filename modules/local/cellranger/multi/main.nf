@@ -9,8 +9,8 @@ process CELLRANGER_MULTI {
     path index
 
     output:
-    tuple val(meta), path("**/outs/**"), emit: outs
-    path "versions.yml"                , emit: versions
+    tuple val(meta), path("**/outs/per_sample_outs/*", type: 'dir'), emit: outs
+    path "versions.yml"                                            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

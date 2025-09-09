@@ -9,8 +9,8 @@ process CELLRANGER_COUNT {
     path  index
 
     output:
-    tuple val(meta), path("**/outs/**"), emit: outs
-    path "versions.yml"                , emit: versions
+    tuple val(meta), path("**/outs", type: 'dir')   , emit: outs
+    path "versions.yml"                             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -34,7 +34,7 @@ process CELLRANGER_COUNT {
                    --sample=${prefix} \
                    --localcores=${task.cpus} \
                    --localmem=${task.memory.toGiga()} 
-    
+                   
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
