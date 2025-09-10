@@ -1,0 +1,8 @@
+name: ribodetector_cpu
+description: making bigwig for small RNAseq
+tools:
+  - ShortTracks:
+      description: |
+      RiboDetector - Accurate and rapid RiboRNA sequences Detector based on deep learning
+      homepage: https://github.com/hzi-bifo/RiboDetector
+      doi: doi.org/10.1093/nar/gkac112

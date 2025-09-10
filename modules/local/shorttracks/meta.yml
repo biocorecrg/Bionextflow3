@@ -1,0 +1,8 @@
+name: shorttracks
+description: making bigwig for small RNAseq
+tools:
+  - ShortTracks:
+      description: |
+        ShortTracks is a useful length- and strand-based coverage files (bigwig) from small RNA-seq alignments (BAM)
+      homepage: https://github.com/MikeAxtell/ShortTracks
+
