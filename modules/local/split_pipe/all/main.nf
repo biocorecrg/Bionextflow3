@@ -10,7 +10,7 @@ process SPLITPIPE_ALL {
     tuple val(meta2),  path(index)
     
     output:
-    tuple val(meta), path("${meta.id}")                       , emit: index
+    tuple val(meta), path("${meta.id}")                       , emit: out
     path  "versions.yml"                                      , emit: versions
 
     when:
