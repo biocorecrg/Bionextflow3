@@ -3,7 +3,7 @@ process SPLITPIPE_ALL {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
-    container 'biocorecrg/spipe:1.3.1'
+    container 'biocorecrg/spipe:1.6.1'
 
     input:
     tuple val(meta),   path(reads)
@@ -36,7 +36,10 @@ process SPLITPIPE_ALL {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         split-pipe: \$(split-pipe --version | cut -d ' ' -f 2 | sed 's/v//g')
-    END_VERSIONS
+END_VERSIONS
     """
 
+
 }
+
+

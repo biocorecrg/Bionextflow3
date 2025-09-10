@@ -3,7 +3,7 @@ process SPLITPIPE_MKREF {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
-    container 'biocorecrg/spipe:1.3.1'
+    container 'biocorecrg/spipe:1.6.1'
 
     input:
     tuple val(meta),   path(genome)
@@ -30,7 +30,7 @@ process SPLITPIPE_MKREF {
 	   --output_dir ./${meta.id}
 
 	# Fix for missing version
-	sed -i s/'"."'/'"1.3.1"'/ ${meta.id}/process/mkref_def.json
+	sed -i s/'"."'/'"1.6.1"'/ ${meta.id}/process/mkref_def.json
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
