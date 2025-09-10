@@ -12,17 +12,11 @@ process GENE_COUNTS_STATS {
 
     output:
     path("*.csv")               , emit: csv          // file for multiqc to create RNA stats table
-    path("versions.yml")        , emit: versions
 
     script:
     def rna_type_flag = rna_type != "" ? "-r ${rna_type}" : ""
     
     """
     RNA_summary.py --desc ${desc_file} --annotation ${annotated_file} --experiment ${experiment} ${rna_type_flag}
-    
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        container: "${task.container}"
-    END_VERSIONS
     """
 }
