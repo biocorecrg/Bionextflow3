@@ -35,7 +35,7 @@ process SPLITPIPE_MKREF {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         split-pipe: \$(split-pipe --version | cut -d ' ' -f 2 | sed 's/v//g')
-    END_VERSIONS
+END_VERSIONS
     """
 
 }
