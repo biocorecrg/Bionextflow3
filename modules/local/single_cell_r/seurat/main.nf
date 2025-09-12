@@ -11,6 +11,7 @@ process SEURAT {
     input:
     tuple val(meta), path("input_ori.rds")
     val(genome)
+    path(rrna_genes)
 
     output:
     tuple val(meta), path("*.pdf"), emit: pdfs
@@ -56,6 +57,21 @@ dev.off()
 """
 	} 	
 
+    def vinplot_cmd  = """VlnPlot(seurObj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3, pt.size = 0)"""
+
+   if (rrna_genes) {
+    vinplot_cmd = """
+    rRNA_genes <- readLines(\"${rrna_genes}\")
+    print(paste0("Searching for ", length(rRNA_genes), " rRNA genes"))
+    # Filtra quelli presenti nel Seurat object
+    rRNA_genes<-gsub("_", "-", rRNA_genes)
+    rRNA_genes_filtered <- rRNA_genes[rRNA_genes %in% rownames(seurObj)]
+    print(paste0("Found ", length(rRNA_genes_filtered), " rRNA genes in the seurat object"))
+    seurObj[["percent.rRNA"]] <- PercentageFeatureSet(seurObj, features = rRNA_genes_filtered)
+	VlnPlot(seurObj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rRNA"), ncol = 4, pt.size = 0)
+"""
+   }
+
 	"""
 cat > CMD.R << 'EOL'
 
@@ -82,10 +98,9 @@ if (length(mt_genes) == 0) {
 
 # Compute percent mitochondrial content
 seurObj[["percent.mt"]] <- PercentageFeatureSet(seurObj, features = mt_genes, assay = 'RNA')
-seurObj[["percent.rb"]] <- PercentageFeatureSet(seurObj, pattern = "^RP[SL]",  assay = 'RNA')
 
-pdf(paste("${prefix}", "_vp.pdf", sep=""), width=10, height=20)
-VlnPlot(seurObj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb") , ncol = 4)
+pdf(paste("${prefix}", "_vp.pdf", sep=""), width=10)
+${vinplot_cmd}
 dev.off()
 
 # subsetting and normalize 
@@ -94,14 +109,19 @@ cutoff.mt<-round(quantile(seurObj[["percent.mt"]][, 1], c(.95)))[[1]]
 cutoff.nFeat<-round(quantile(seurObj[["nFeature_RNA"]][, 1], c(.99)))[[1]]
 
 
+
 pdf(paste("${prefix}", "_fc.pdf", sep=""), width=10)
 plot1 <- FeatureScatter(seurObj, feature1 = "nCount_RNA", feature2 = "percent.mt") + theme(legend.position="none") + geom_hline(yintercept = cutoff.mt) + annotate("text", x=-100, y=cutoff.mt+2, label= cutoff.mt)
 plot2 <- FeatureScatter(seurObj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") + theme(legend.position="none") + geom_hline(yintercept = 200) + geom_hline(yintercept = cutoff.nFeat) + annotate("text", x=c(-400,-400), y=c(300, cutoff.nFeat+100), label= c(200, cutoff.nFeat))
 plot1 + plot2
 dev.off()
 
+print(paste("Number of cells before subsetting:", ncol(seurObj)))
 
+print(paste0("Subsetting cells using the following criteria: nFeature_RNA > 200 & nFeature_RNA < ", cutoff.nFeat[1], " & percent.mt < ",cutoff.mt))
 seurObj <- subset(seurObj, subset = nFeature_RNA > 200 & nFeature_RNA < cutoff.nFeat[1] & percent.mt < cutoff.mt)
+
+print(paste("Number of cells after subsetting:", ncol(seurObj)))
 
 seurObj <- SCTransform(seurObj)
 seurObj <- FindVariableFeatures(seurObj, selection.method = "vst", nfeatures = 2000)
@@ -134,10 +154,6 @@ pdf(paste("${prefix}", "_dp.pdf", sep=""), width=10)
 DimPlot(seurObj, reduction = "umap")
 dev.off()
 
-# find all markers of cluster 2
-cluster2.markers <- FindMarkers(seurObj, ident.1 = 2, min.pct = 0.25)
-head(cluster2.markers, n = 5)
-
 # find markers for every cluster compared to all remaining cells, report only the positive
 # ones
 
@@ -151,11 +167,11 @@ cluster0.markers <- FindMarkers(seurObj, ident.1 = 0, logfc.threshold = 0.25, te
 seurObj.markers %>%
     group_by(cluster) %>%
     top_n(n = 10, wt = avg_log2FC) -> top10
-    
 
 pdf(paste("${prefix}", "_hm.pdf", sep=""), width=10, height=20)
 DoHeatmap(seurObj, features = top10\$gene) + NoLegend()
 dev.off()
+
 
 ${script_anno}
 
