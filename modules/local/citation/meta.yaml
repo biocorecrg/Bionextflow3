@@ -1,0 +1,11 @@
+name: citation-js
+description: Tool for retrieving citation information from DOI using citation-js library
+keywords:
+  - citation
+  - doi
+tools:
+  - citation-js:
+      description: Tool for converting among different citation formats.
+      homepage: https://citation.js.org/
+      licence:
+        - MIT
