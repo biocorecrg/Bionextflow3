@@ -8,6 +8,7 @@ process SPLITPIPE_ALL {
     input:
     tuple val(meta),   path(reads)
     tuple val(meta2),  path(index)
+    tuple val(meta3),  path(xlm_demux)
     
     output:
     tuple val(meta), path("${meta.id}")                       , emit: out
@@ -19,15 +20,16 @@ process SPLITPIPE_ALL {
     script:
     def args          = task.ext.args ?: ''
     def prefix        = task.ext.prefix ?: "${meta.id}"
-    def reads1 = []
-    def reads2 = []
+    def reads1        = []
+    def reads2        = []
     meta.single_end ? [reads].flatten().each { reads1 << it } : reads.eachWithIndex { v, ix -> (ix & 1 ? reads2 : reads1) << v }
-    def input_reads = meta.single_end ? "-r ${reads1.join(" ")}" : "--fq1 ${reads1.join(" ")} --fq2 ${reads2.join(" ")}"
-  
+    def input_reads   = meta.single_end ? "-r ${reads1.join(" ")}" : "--fq1 ${reads1.join(" ")} --fq2 ${reads2.join(" ")}"
+    def samp_tab      = xlm_demux ? "--samp_sltab ${xlm_demux}" : ""
+
     """
-   split-pipe \
+    split-pipe \
        --mode all ${args}  \
-       --genome_dir ${index} \
+       --genome_dir ${index} ${samp_tab} \
        ${input_reads} \
        --output_dir ${prefix} \
        --nthreads ${task.cpus}

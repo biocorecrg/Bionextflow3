@@ -28,6 +28,11 @@ def notify_slack(text, hook) {
 
 }
 
+// empty map for nf-core modules
+def empyMeta() {
+    return [[:], []]
+}
+
 def makeSoftwareVersionYamlFile(ch_versions) {
         def ch_collated_versions = softwareVersionsToYAML(ch_versions)
         .collectFile(
