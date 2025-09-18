@@ -10,7 +10,7 @@ const TurndownService = require("turndown");
 // Parse CLI arguments
 const args = process.argv.slice(2);
 const usage = `
-Usage: node main.js <DOI> [--format <format>] [--template <template>]
+Usage: node main.js [--format <format>] [--template <template>] <DOI>
 
 Options:
   --format    Output format (html, markdown; default: html)
@@ -22,11 +22,11 @@ if (args.length === 0 || args.includes("--help")) {
   process.exit(0);
 }
 
-const doi = args[0];
+const doi = args[args.length - 1];
 let format = "html";
 let template = "apa";
 
-for (let i = 1; i < args.length; i++) {
+for (let i = 0; i < args.length; i++) {
   if (args[i] === "--format" && args[i + 1]) {
     format = args[i + 1];
     i++;
@@ -39,7 +39,7 @@ for (let i = 1; i < args.length; i++) {
 async function generateCitation(doi, format = "html", template = "apa") {
   try {
     const exampleCite = await Cite.async(doi);
-    let formatCite = html;
+    let formatCite;
     if (format === "markdown") {
       formatCite = "html";
     } else {
