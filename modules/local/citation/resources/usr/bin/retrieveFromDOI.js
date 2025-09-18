@@ -39,8 +39,14 @@ for (let i = 1; i < args.length; i++) {
 async function generateCitation(doi, format = "html", template = "apa") {
   try {
     const exampleCite = await Cite.async(doi);
+    let formatCite = html;
+    if (format === "markdown") {
+      formatCite = "html";
+    } else {
+      formatCite = format;
+    }
     const output = exampleCite.format("bibliography", {
-      format: format === "markdown" ? "html" : format,
+      format: formatCite,
       template,
     });
     if (format === "markdown") {
