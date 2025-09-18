@@ -1,0 +1,7 @@
+name: seurat
+description: Module to use Seurat package together with SingleR and celldex
+tools:
+  - seurat:
+      description: Seurat is an R package designed for QC, analysis, and exploration of single-cell RNA-seq data
+      homepage: https://satijalab.org/seurat/
+      doi: "10.1038/s41587-023-01767-y"
