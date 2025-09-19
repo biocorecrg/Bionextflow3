@@ -146,10 +146,10 @@ def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
 }
 
 // evaluate input string for making a file path or an empty map
-def fromParToValueFileChannel(input_string) {
+def fromParToValueFileChannel(input_string, mytype = "file") {
 	myfile = []
 	if (input_string) {
-		myfile = channel.fromPath( input_string,  checkIfExists:true).first()
+		myfile = channel.fromPath( input_string,  checkIfExists:true, type: mytype).first()
 	}
     return (myfile)
 }
