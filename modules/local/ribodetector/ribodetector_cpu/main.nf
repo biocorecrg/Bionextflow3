@@ -37,7 +37,7 @@ process RIBODETECTOR {
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
             ribodetector: \$( ribodetector --version 2>&1 | sed 's/ribodetector //g' )
-        END_VERSIONS
+END_VERSIONS
 
 
         """
@@ -58,7 +58,7 @@ process RIBODETECTOR {
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
             ribodetector: \$( ribodetector --version 2>&1 | sed 's/ribodetector //g' )
-        END_VERSIONS
+END_VERSIONS
 
 	
          """
