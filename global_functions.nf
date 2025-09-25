@@ -33,6 +33,8 @@ def empyMeta() {
     return [[:], []]
 }
 
+// make Software Version YAML
+
 def makeSoftwareVersionYamlFile(ch_versions) {
         def ch_collated_versions = softwareVersionsToYAML(ch_versions)
         .collectFile(
@@ -126,13 +128,14 @@ def zcatOrCat(filename) {
 
 // evaluate input string for making SE or PE read channel with meta info
 // suitable for nf-core modules
-def fromStringToNFCoreSeqs(input_string, parseid = false) {
+def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
 	def myseqs = channel.of()
+
 	if (input_string.contains("{") && input_string.contains(",") && input_string.contains("}")) {
-    	  myseqs = channel.fromFilePairs( input_string, checkIfExists: true ) 
+    	  myseqs = channel.fromFilePairs( input_string, checkIfExists: true, type: mytype ) 
     	  .map {[ [id: it[0], single_end:false ],  it[1] ] }
 	} else {
-          mypars = channel.fromFilePairs( input_string, size: 1, checkIfExists: true)
+          mypars = channel.fromFilePairs( input_string, size: 1, checkIfExists: true, type: mytype)
 	  if (parseid) {
              myseqs = mypars.map {[ [id: it[1][0].name, single_end: true], it[1] ] }
 	  } else {
@@ -143,10 +146,10 @@ def fromStringToNFCoreSeqs(input_string, parseid = false) {
 }
 
 // evaluate input string for making a file path or an empty map
-def fromParToValueFileChannel(input_string) {
+def fromParToValueFileChannel(input_string, mytype = "file") {
 	myfile = []
 	if (input_string) {
-		myfile = channel.fromPath( input_string,  checkIfExists:true).first()
+		myfile = channel.fromPath( input_string,  checkIfExists:true, type: mytype).first()
 	}
     return (myfile)
 }
