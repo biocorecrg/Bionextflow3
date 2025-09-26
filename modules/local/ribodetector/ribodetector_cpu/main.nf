@@ -1,6 +1,6 @@
 process RIBODETECTOR {
     tag "${meta.id}"
-    label 'process_high'
+    label 'process_low'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -22,6 +22,7 @@ process RIBODETECTOR {
     def args          = task.ext.args ?: ''
     def prefix        = task.ext.prefix ?: "${meta.id}"
     
+
     if (meta.single_end) {
         """
    		tot=`awk '{num++}END{print num/4}' ${reads}`
