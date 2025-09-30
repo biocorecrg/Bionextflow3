@@ -1,7 +1,7 @@
 name: shortstack
 description: Alignment of small RNA-seq data and annotation of small RNA-producing genes
 tools:
-  - ShortTracks:
+  - shortstack:
       description: |
       Alignment of small RNA-seq data and annotation of small RNA-producing genes
       homepage: https://github.com/MikeAxtell/ShortStack
