@@ -1,0 +1,8 @@
+name: annotate_shortstack
+description: Annotation of shortstack aligment 
+tools:
+  - bedtools:
+      description: |
+      bedtools - the swiss army knife for genome arithmetic
+      homepage: https://github.com/arq5x/bedtools2
+      doi: https://doi.org/10.1002/0471250953.bi1112s47
