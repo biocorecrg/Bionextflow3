@@ -7,6 +7,7 @@ process METHODS_SECTION {
     path(pipeline_paths)
     path(params_file)
     path(template)
+    path(nf_core)
 
   //  output:
   //  path("*_output.yml"), emit: methods_section
