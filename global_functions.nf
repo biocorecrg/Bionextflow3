@@ -28,6 +28,19 @@ def notify_slack(text, hook) {
 
 }
 
+def make_yaml_methods(mymap, toplevel, append=false) {
+    def myFile = file('methods.yaml')
+    def yaml_text = "${toplevel}:\n" + mymap.collect { k,v -> "  ${k}: \"${v}\"" }.join("\n")
+
+    // Write or append safely
+    if (append) {
+        myFile << "\n" + yaml_text   // add newline before appending
+    } else {
+        myFile.text = yaml_text
+    }
+    return(channel.fromPath(myFile))
+}
+
 // empty map for nf-core modules
 def empyMeta() {
     return [[:], []]
