@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(
     epilog="Example usage: python methods.py -p /path/to/repo",
     add_help=True,
 )
-parser.add_argument("-p", "--path", help="Path to the repository", required=True)
+parser.add_argument("-p", "--path", help="Path to the repository", required=True, type=os.path.abspath)
 args = parser.parse_args()
 
 path = args.path

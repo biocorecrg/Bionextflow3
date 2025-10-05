@@ -9,15 +9,13 @@ process METHODS_SECTION {
     path(template)
     path(nf_core)
 
-  //  output:
+    output:
   //  path("*_output.yml"), emit: methods_section
-  //  path("methods_description_mqc.yml"), emit: methods_mqc
+    path("methods_description_mqc.yml"), emit: methods_mqc
 
     script:
     """
-    echo hey jude
-   # pipeline_methods.py -p ./
-   # addCitationFromYaml.js --input methods_output_pre.yml --output methods_output.yml
-   # smallrnaseq_methods.py --methods_output methods_output.yml --params ${params_file}
-    """
+    pipeline_methods.py -p ${projectDir}
+    addCitationFromYaml.js --input methods_output_pre.yml --output methods_output.yml
+   smallrnaseq_methods.py -v methods_output.yml -m methods.yaml -t template.yml """
 }
