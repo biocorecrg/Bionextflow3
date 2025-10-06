@@ -15,7 +15,8 @@ process METHODS_SECTION {
 
     script:
     """
-    pipeline_methods.py -p ${projectDir}
-    addCitationFromYaml.js --input methods_output_pre.yml --output methods_output.yml
-   smallrnaseq_methods.py -v methods_output.yml -m methods.yaml -t template.yml """
+    get_doi_from_meta.py -p ./
+    addCitationFromYaml.js --input dois.yml --output methods_data.yml 
+    pipeline_methods.py -d methods_data.yml -m methods.yaml -t template.yml
+ """
 }

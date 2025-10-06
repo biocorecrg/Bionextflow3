@@ -28,7 +28,7 @@ process SHORTTRACKS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        shortstack: \$( ShortTracks --version | sed 's/^ShortTracks//g')
+        shorttracks: \$( ShortTracks --version | sed 's/^ShortTracks//g')
     END_VERSIONS
     """
 
