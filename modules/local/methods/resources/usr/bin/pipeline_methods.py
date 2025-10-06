@@ -59,7 +59,7 @@ def replace_citations(text):
 
 methods_description=f"""
 id: "methods-description"
-description: "Methods used for the current pipeline."
+description: ""
 section_name: "{ pipeline_name } Methods Description"
 plot_type: "html"
 
