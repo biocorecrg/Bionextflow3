@@ -28,6 +28,15 @@ def notify_slack(text, hook) {
 
 }
 
+// end of pipeline
+def end_messaged(hook) {
+    def text = final_message(workflow.manifest.name)
+    println text
+    slackhook = env("${hook}") ?: hook
+    slackhook ? notify_slack(text, slackhook) : null
+
+}
+
 def make_yaml_methods(mymap, toplevel, append=false) {
     def myFile = file('methods.yaml')
     def yaml_text = "${toplevel}:\n" + mymap.collect { k,v -> "  ${k}: \"${v}\"" }.join("\n")
