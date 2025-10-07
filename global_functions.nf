@@ -50,6 +50,25 @@ def make_yaml_methods(mymap, toplevel, append=false) {
     return(channel.fromPath(myFile))
 }
 
+def add_report_header_info(multiqc_file, values) {
+    
+    def newFile = file('new_multiqc_config.yaml')
+    
+    def yamlContent = "report_header_info:\n"
+    values.each { k, v ->
+        yamlContent += "  - ${k}: \"${v}\"\n"
+    }
+    def old_file = file(multiqc_file)
+
+    yamlContent += "\n" + old_file.text
+
+    // write file
+    newFile.text = yamlContent
+
+    return(channel.fromPath(newFile))
+}
+
+
 // empty map for nf-core modules
 def empyMeta() {
     return [[:], []]

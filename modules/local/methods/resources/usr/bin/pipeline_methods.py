@@ -40,10 +40,12 @@ for tool in all_tools_info.keys():
     citations_info[tool] = all_tools_info[tool]["homepage"]
 
 info_4_template = versions_info | reporting_info
-#print(citations_info)
-#print(info_4_template)
-#print(parameters_info)
-#print(tools.keys())
+
+for tool_name in parameters_info.keys():
+    extrapars = parameters_info[tool_name]
+    if(extrapars != ""):
+        info_4_template[tool_name] = str(info_4_template[tool_name]) +  " with parameters " + extrapars
+
 
 
 ##### text to be save as methods_description_mqc.yml that will be used by multiqc to generate the methods section in the report #####
