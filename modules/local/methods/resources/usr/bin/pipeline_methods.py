@@ -44,7 +44,8 @@ info_4_template = versions_info | reporting_info
 for tool_name in parameters_info.keys():
     extrapars = parameters_info[tool_name]
     if(extrapars != ""):
-        info_4_template[tool_name] = str(info_4_template[tool_name]) +  " with parameters " + extrapars
+        if (tool_name in info_4_template):
+          info_4_template[tool_name] = str(info_4_template[tool_name]) +  " with parameters " + extrapars
 
 
 
@@ -62,7 +63,7 @@ def replace_citations(text):
 methods_description=f"""
 id: "methods-description"
 description: ""
-section_name: "{ pipeline_name } Methods Description"
+section_name: "Methods Description"
 plot_type: "html"
 
 data: |
