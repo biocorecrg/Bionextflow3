@@ -65,7 +65,7 @@ def add_report_header_info(multiqc_file, values) {
     // write file
     newFile.text = yamlContent
 
-    return(channel.fromPath(newFile))
+    return(channel.fromPath(newFile).first())
 }
 
 
