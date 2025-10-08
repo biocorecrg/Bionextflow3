@@ -86,16 +86,17 @@ for section_name in template_rows.keys():
       if(my_row.startswith('(BOOL)') and my_info == "" ):
         print("skipping line " + my_row )
       else:
-       # Replace placeholders
-        for key, value in info_4_template.items():
+       # Replace placeholders       
+        for key, value in sorted(info_4_template.items(), key=lambda x: len(x[0]), reverse=True):
           my_row = my_row.replace(f"#{key}", str(value))
-        
+          
         methods_description += "\n " + my_row
     
     elif(section_name == "tail"):
       my_row  = template_rows[section_name]
       for key, value in citations_info.items():
         my_row = my_row.replace(f"#{key}", str(value))
+        
       #sanitize removing citations not needed
       clean_rows = [line for line in my_row.splitlines() if '#' not in line]
       my_row = "\n  ".join(clean_rows)
