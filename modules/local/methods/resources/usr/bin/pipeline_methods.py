@@ -72,6 +72,8 @@ data: |
 for section_name in template_rows.keys():
     if (section_name == "header"):
       my_row  = template_rows[section_name]
+      for key, value in sorted(info_4_template.items(), key=lambda x: len(x[0]), reverse=True):  
+          my_row = my_row.replace(f"#{key}", str(value))
       methods_description += "\n " + my_row
 
     elif (section_name in info_4_template):
