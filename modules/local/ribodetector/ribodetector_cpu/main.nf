@@ -30,7 +30,7 @@ process RIBODETECTOR {
 
 		ribodetector_cpu  -t ${task.cpus} \
 		-l \$length \
-		-o /dev/null /dev/null -e rrna -r rna1.fq \
+		-o /dev/null -e rrna -r rna1.fq \
 		 -i ${reads} 
 
 		awk -v id=${prefix} -v tot=\$tot '{num++}END{print id" "num/4/tot*100}' rna1.fq > ${prefix}_rna_perc.txt
