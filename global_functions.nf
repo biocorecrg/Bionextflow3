@@ -214,13 +214,15 @@ def addPrefixToFiles(input_nf_ch, prefix) {
 // remove the metamap from a channel 
 def metaToCanonical(input_nf_ch, flat=false) {
     input_nf_ch.map { meta, files ->
+        def result
         if (flat) {
             // produce [id, file1, file2, ...]
-            [ meta.id ] + files.flatten()
+            result = [ meta.id.toString() ] + files.flatten()
         } else {
             // produce [id, [file1, file2, ...]]
-            [ meta.id, files.flatten() ]
+            result = [ meta.id.toString(), files.flatten() ]
         }
+        return result  // Ensure it's a tuple
     }
 }
 
@@ -235,7 +237,7 @@ def flattenToTuple(input_ch) {
 // remove the metamap from a channel 
 def canonicalToMeta(input_ch) {
 	nfcore_ch = input_ch.map { id, files ->
-		if( files.size() == 2 ) {
+		if( files.size() >= 2 ) {
 			[ [ id: id, single_end : false], files ]
 
 		} else {
@@ -254,14 +256,12 @@ def subsetReads (reads, subset_num) {
 
     flat_reads_pe = metaToCanonical(reads_types.pe, true)
     flat_reads_se = metaToCanonical(reads_types.se, true)
-
     splitted_pe = flat_reads_pe.splitFastq( by: subset_num, decompress:true, file:true, limit:subset_num, pe: true )
     splitted_se = flat_reads_se.splitFastq( by: subset_num, decompress:true, file:true, limit:subset_num )
 	splitted = splitted_pe.mix(splitted_se)
 	tuples = flattenToTuple(splitted)
 	
 	return (canonicalToMeta(tuples))
-
 
 }
 
