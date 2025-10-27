@@ -182,8 +182,8 @@ out_file <- "versions.yml"
 
 versions <- c(
   "    ${task.process}:",
-  paste("        Seurat:", packageVersion("Seurat")),
-  paste("        SingleR:", packageVersion("SingleR")),
+  paste("        seurat:", packageVersion("Seurat")),
+  paste("        singler:", packageVersion("SingleR")),
   paste("        celldex:", packageVersion("celldex"))
 )
 
