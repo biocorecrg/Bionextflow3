@@ -19,7 +19,7 @@ process EVENTUAL_UNZIP {
  	}
     else {
     	"""
-    		ln -s ${file} ./${file.name}
+    		ln -s ${file} ./${file.simpleName}
     	"""
     }
 
