@@ -75,7 +75,7 @@ makeDDSFromStar <- function(input, desc, field, number) {
 	counts.files <- lapply( ff, read.table, skip = 4 )
 	counts <- as.data.frame( sapply( counts.files, function(x) x[ , number ] ) )
 	fn <- basename(ff)
-	fn <- gsub( "ReadsPerGene.out.tab", "", fn)
+	fn <- gsub("\\.ReadsPerGene\\.out\\.tab", "", fn)
 	colnames(counts) <- fn
 	row.names(counts) <- counts.files[[1]]$V1
 
