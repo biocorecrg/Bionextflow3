@@ -20,7 +20,7 @@ process GTF_TO_DESC {
     def prefix        = task.ext.prefix ?: "${meta.id}"
 
     """
-        conv_ens_gtf_to_desc.sh ${gtffile}
+        conv_ens_gtf_to_desc.sh ${gtffile} ${args}
     """
 
 }
