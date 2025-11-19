@@ -2,17 +2,17 @@
 *  MTX merge 
 */
 
-process MTX_merge {
+process MTX_MERGE {
     tag "$meta.id"
     label 'process_high_memory'
 
-    container 'biocorecrg/sc_benchmark:0.2'
+    container 'docker://biocorecrg/sc_benchmark:0.2'
 
     input:
     tuple val(meta), path("*")
 
     output:
-    tuple val(meta), path("*.h5"), emit: h5
+    tuple val(meta), path("*.h5"), emit: merged_h5,    optional:true
 
     script:
     args = task.ext.args ?: ''

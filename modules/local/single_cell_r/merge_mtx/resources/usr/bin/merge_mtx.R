@@ -30,7 +30,6 @@ opt <- parse_args(opt_parser)
 data_dir <- opt$Input_dir
 oprefix <- opt$Output_prefix
 
-
 # List all matrix files in the directory
 mtx_files <- list.files(path = data_dir, pattern = "matrix\\.mtx$")
 
@@ -93,11 +92,14 @@ combined <- Reduce(`+`, expanded)
 #-----------------------------------
 # 7) Create final Seurat object
 #-----------------------------------
-merged <- CreateSeuratObject(counts = combined)
+if (length(datasets) != 0 && is.matrix(combined)) {
 
-# Extract counts from the RNA assay
-counts_matrix <- GetAssayData(merged, assay = "RNA", layer = "counts")
+    merged <- CreateSeuratObject(counts = combined)
 
-# Save as HDF5
-h5_file <- paste0(oprefix, ".h5")
-writeHDF5Array(counts_matrix, filepath = h5_file)
+    # Extract counts from the RNA assay
+    counts_matrix <- GetAssayData(merged, assay = "RNA", layer = "counts")
+
+    # Save as HDF5
+    h5_file <- paste0(oprefix, ".h5")
+    writeHDF5Array(counts_matrix, filepath = h5_file)
+}
