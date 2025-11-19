@@ -16,6 +16,13 @@ option_list <- list(
               help = "Input directory or file argument [string], [default .]", metavar = "string")
 )
 
+is_empty_mtx <- function(mtx_path) {
+  header <- readLines(mtx_path, n = 2)
+  dims <- strsplit(header[2], " ")[[1]]
+  dims <- as.numeric(dims)
+  return(all(dims == 0))
+}
+
 # Create a parser object and parse the command-line arguments
 opt_parser <- OptionParser(option_list = option_list)
 opt <- parse_args(opt_parser)
@@ -34,13 +41,22 @@ datasets <- list()
 
 for(i in seq_along(prefixes)) {
   prefix <- prefixes[i]
-  message("Loading: ", prefix)
+  mtx      = paste0(prefix, ".matrix.mtx")
+
+  # Skip empty MTX
+  if (is_empty_mtx(mtx)) {
+    message("Skipping EMPTY MTX: ", mtx)
+    next
+  }
+  else {
+    message("Loading: ", prefix)
   
-  datasets[[prefix]] <- ReadMtx(
-    mtx      = paste0(prefix, ".matrix.mtx"),
-    features = paste0(prefix, ".features.tsv"),
-    cells    = paste0(prefix, ".barcodes.tsv")
-  )
+    datasets[[prefix]] <- ReadMtx(
+      mtx      = paste0(prefix, ".matrix.mtx"),
+      features = paste0(prefix, ".features.tsv"),
+      cells    = paste0(prefix, ".barcodes.tsv")
+    )
+  }
 }
 
 #-----------------------------------
