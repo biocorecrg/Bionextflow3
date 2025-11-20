@@ -100,4 +100,5 @@ counts_matrix <- GetAssayData(merged, assay = "RNA", layer = "counts")
 
 # Save as HDF5
 h5_file <- paste0(oprefix, ".h5")
-writeHDF5Array(counts_matrix, filepath = h5_file)
+writeTENxMatrix(counts_matrix, filepath = h5_file)
+#writeHDF5Array(counts_matrix, filepath = h5_file)
