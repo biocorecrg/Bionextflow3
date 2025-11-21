@@ -17,7 +17,7 @@ process BASES2FASTQ {
     tuple val(meta), path('*/RunStats.json')                 , emit: run_stats
     tuple val(meta), path('*/RunManifest.json')              , emit: generated_run_manifest
     tuple val(meta), path('*/Metrics.csv')                   , emit: metrics
-    tuple val(meta), path('ou*tput/UnassignedSequences.csv') , emit: unassigned
+    tuple val(meta), path('*/UnassignedSequences.csv') , emit: unassigned
     path "versions.yml"                                      , emit: versions
 
     when:
