@@ -6,6 +6,7 @@ suppressMessages(library(purrr))
 suppressMessages(library(Matrix))
 suppressMessages(library(HDF5Array))
 suppressMessages(library("optparse"))
+suppressMessages(library("SeuratDisk"))
 
 # functions
 # Define a list of options that the script accepts
@@ -29,6 +30,7 @@ opt <- parse_args(opt_parser)
 
 data_dir <- opt$Input_dir
 oprefix <- opt$Output_prefix
+
 
 # List all matrix files in the directory
 mtx_files <- list.files(path = data_dir, pattern = "matrix\\.mtx$")
@@ -92,14 +94,18 @@ combined <- Reduce(`+`, expanded)
 #-----------------------------------
 # 7) Create final Seurat object
 #-----------------------------------
-if (length(datasets) != 0 && is.matrix(combined)) {
+if (length(datasets) != 0 && is(combined, "sparseMatrix")) {
 
     merged <- CreateSeuratObject(counts = combined)
 
     # Extract counts from the RNA assay
-    counts_matrix <- GetAssayData(merged, assay = "RNA", layer = "counts")
+    #counts_matrix <- GetAssayData(merged, assay = "RNA", layer = "counts")
+    merged[["RNA"]] <- as(merged[["RNA"]], Class = "Assay")
 
     # Save as HDF5
-    h5_file <- paste0(oprefix, ".h5")
-    writeTENxMatrix(counts_matrix, filepath = h5_file)
+    h5_file <- paste0(oprefix, ".h5seurat")
+
+    SaveH5Seurat(merged, filename = h5_file, overwrite = TRUE)
+    
 }
+
