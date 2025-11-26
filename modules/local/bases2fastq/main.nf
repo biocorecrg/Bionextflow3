@@ -1,5 +1,5 @@
 // This module is a modification of the original nf-core one
-// we changed the hardcoded output folder
+// we changed the hardcoded output folder and its structure
  
 process BASES2FASTQ {
     tag "$meta.id"
@@ -11,14 +11,15 @@ process BASES2FASTQ {
     tuple val(meta), path(run_manifest), path(run_dir)
 
     output:
-    tuple val(meta), path('*/Samples/**/*_R*.fastq.gz')      , emit: sample_fastq
-    tuple val(meta), path('*/Samples/**/*_stats.json')       , emit: sample_json
-    tuple val(meta), path('*/*.html')                        , emit: qc_report
-    tuple val(meta), path('*/RunStats.json')                 , emit: run_stats
-    tuple val(meta), path('*/RunManifest.json')              , emit: generated_run_manifest
-    tuple val(meta), path('*/Metrics.csv')                   , emit: metrics
-    tuple val(meta), path('*/UnassignedSequences.csv') , emit: unassigned
-    path "versions.yml"                                      , emit: versions
+    tuple val(meta), path('*/Project_*/**/*_R*.fastq.gz')        , emit: sample_fastq
+    tuple val(meta), path('*/Project_*/**/*_stats.json')         , emit: sample_json
+    tuple val(meta), path('*/*.html')                            , emit: qc_report
+    tuple val(meta), path('*/RunStats.json')                     , emit: run_stats
+    tuple val(meta), path('*---samplesheet*/RunManifest.json')   , emit: generated_run_manifest
+    tuple val(meta), path('*/Metrics.csv')                       , emit: metrics
+    tuple val(meta), path('*/Unassigned_R*.fastq.gz')            , emit: unassigned_fastq
+    tuple val(meta), path('*/UnassignedSequences.csv')           , emit: unassigned
+    path "versions.yml"                                          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -38,6 +39,9 @@ process BASES2FASTQ {
         $args \\
         $run_dir \\
         $prefix
+    
+    mv $prefix/Samples/Project_* $prefix/
+    mv $prefix/Samples/Unassigned/*.fastq.gz $prefix/
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
