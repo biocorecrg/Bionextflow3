@@ -13,6 +13,7 @@ process MTX_MERGE {
 
     output:
     tuple val(meta), path("*.h5seurat"), emit: merged_h5,    optional:true
+    tuple val(meta), path("*.h5ad"),     emit: merged_h5ad,  optional:true
 
     script:
     args = task.ext.args ?: ''

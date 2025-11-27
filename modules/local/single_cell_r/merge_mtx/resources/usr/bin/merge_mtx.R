@@ -106,6 +106,6 @@ if (length(datasets) != 0 && is(combined, "sparseMatrix")) {
     h5_file <- paste0(oprefix, ".h5seurat")
 
     SaveH5Seurat(merged, filename = h5_file, overwrite = TRUE)
-    
+    Convert(h5_file, dest = "h5ad", overwrite = TRUE)
 }
 
