@@ -21,7 +21,7 @@ process MTX_MERGE {
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
-    merge_mtx.R -d ./ -o ${meta.id}
+    merge_mtx.R ${args} -d ./ -o ${meta.id}
     """
 } 	
 

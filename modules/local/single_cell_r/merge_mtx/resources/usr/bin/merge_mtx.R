@@ -14,7 +14,10 @@ option_list <- list(
   make_option(c("-o", "--Output_prefix"), type = "character", default = "custom",
               help = "Input prefix for output file, [default custom", metavar = "string"),
   make_option(c("-d", "--Input_dir"), type = "character", default = ".",
-              help = "Input directory or file argument [string], [default .]", metavar = "string")
+              help = "Input directory or file argument [string], [default .]", metavar = "string"),
+ make_option(c("-f", "--filter_genes"), type = "integer", default = "0",
+              help = "Filter out cells with less than this number of genes", metavar = "integer")
+
 )
 
 is_empty_mtx <- function(mtx_path) {
@@ -30,6 +33,7 @@ opt <- parse_args(opt_parser)
 
 data_dir <- opt$Input_dir
 oprefix <- opt$Output_prefix
+mingenes <- opt$filter_genes
 
 
 # List all matrix files in the directory
@@ -97,10 +101,16 @@ combined <- Reduce(`+`, expanded)
 if (length(datasets) != 0 && is(combined, "sparseMatrix")) {
 
     merged <- CreateSeuratObject(counts = combined)
+    print(dim(merged))
 
     # Extract counts from the RNA assay
-    #counts_matrix <- GetAssayData(merged, assay = "RNA", layer = "counts")
     merged[["RNA"]] <- as(merged[["RNA"]], Class = "Assay")
+    if (mingenes > 0) {
+      message("Filtering out cells with less than ", mingenes, " genes")
+      merged <- subset(merged, nFeature_RNA >= mingenes)
+    }
+
+    print(dim(merged))
 
     # Save as HDF5
     h5_file <- paste0(oprefix, ".h5seurat")
