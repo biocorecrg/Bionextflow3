@@ -16,9 +16,8 @@ process MTX_MERGE {
     tuple val(meta), path("*.h5ad"),     emit: merged_h5ad,  optional:true
 
     script:
-    args = task.ext.args ?: ''
- 
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def args           = task.ext.args ?: ''
+    def prefix         = task.ext.prefix ?: "${meta.id}"
 
     """
     merge_mtx.R ${args} -d ./ -o ${meta.id}
