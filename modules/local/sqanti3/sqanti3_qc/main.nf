@@ -10,14 +10,13 @@ process SQANTI3_QC {
     tuple val(meta3), path(reference_gtf)    // Reference annotation GTF
 
     output:
-    tuple val(meta), path("sqanti3_results/")                              , emit: output_dir
     tuple val(meta), path("sqanti3_results/*_classification.txt")          , emit: classification, optional: true
     tuple val(meta), path("sqanti3_results/*_junctions.txt")               , emit: junctions, optional: true
     tuple val(meta), path("sqanti3_results/*_corrected.gtf")               , emit: corrected_gtf, optional: true
     tuple val(meta), path("sqanti3_results/*_corrected.fasta")             , emit: corrected_fasta, optional: true
     tuple val(meta), path("sqanti3_results/*.pdf")                         , emit: plots, optional: true
     tuple val(meta), path("sqanti3_results/*.html")                        , emit: report, optional: true
-    path "versions.yml"                                              , emit: versions
+    path "versions.yml"                                                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
