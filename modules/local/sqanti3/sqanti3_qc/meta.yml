@@ -1,0 +1,6 @@
+name: sqanti3_qc
+description: Module to run SQANTI3 tools for isoform detection QC
+tools:
+  - split_pipe:
+      description: SQANTI3 is an integrated development aiming to provide the best characterization for your new long read-defined transcriptome.
+      homepage: https://github.com/ConesaLab/SQANTI3
