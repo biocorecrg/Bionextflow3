@@ -14,6 +14,7 @@ process MULTIQC_PCA {
     path("*_variance.tsv"), emit: variance
 	path("norm_counts.genes"), emit: norm_counts
 	path("raw_counts.genes"), emit: raw_counts
+    path("Sample_Clustering_matrix.tsv"), emit: sample_clustering
 	
 	
     script:
