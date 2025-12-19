@@ -84,3 +84,10 @@ if (args$Desc_genes != "") {
 
 
 }
+
+
+## Sample CLustering table
+
+sample_clustering_matrix <- sample_clustering(vsd)
+
+write.table(sample_clustering_matrix, file="Sample_Clustering_matrix.tsv", sep="\t", quote=FALSE, row.names=TRUE, col.names=NA)

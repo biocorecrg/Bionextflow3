@@ -203,6 +203,18 @@ makeVST <- function(dds, blindval = FALSE) {
    return(vsd)
 }
 
+sample_clustering <- function(vsd) {
+
+	sampleDists  <- dist(t(assay(vsd)))
+	sampleDists 
+
+	sampleDistMatrix <- as.matrix(sampleDists )
+	sampleDistMatrix
+
+	return(sampleDistMatrix)
+}
+
+
 makeHeatmapDE <- function(results, dds, assay_field_raw, treat, ctrl, pcut, l2fc, h, w, maxnum=100000, sample_list=NULL, genes_file=NULL) {
 
     assayfield <- str_remove(assay_field_raw, '~ ')
@@ -352,3 +364,5 @@ printContrGenes <- function(rot_sel, desc) {
 	write.csv(resOrdered, file="pca.genes", row.names = FALSE)          
 
 }
+
+
