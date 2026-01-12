@@ -205,7 +205,7 @@ makeVST <- function(dds, blindval = FALSE) {
 
 sample_clustering <- function(vsd) {
 
-	sampleDists  <- dist(t(assay(vsd)))
+	sampleDists  <- dist(t(assay(vsd)), method = "spearman")
 	sampleDists 
 
 	sampleDistMatrix <- as.matrix(sampleDists )
