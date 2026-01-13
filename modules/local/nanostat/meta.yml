@@ -1,0 +1,15 @@
+name: nanostat
+description: Run NanoStat on nanopore-sequenced reads
+keywords:
+  - quality control
+  - qc
+  - fastq
+  - sequencing summary
+  - nanopore
+tools:
+  - nanostat:
+      description: |
+        NanoStat calculate various statistics from a long read sequencing dataset in fastq, bam or albacore sequencing summary format.
+      homepage: https://github.com/wdecoster/nanostat
+      licence: ["GPL-3.0-or-later"]
+      identifier: biotools:nanostat
