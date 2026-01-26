@@ -1,6 +1,6 @@
 process MULTIQC_PCA {
     
-    container 'biocorecrg/deseq2:2022_2'
+    container 'fabianandrade/deseq2:2026_1'
 
     input:
     tuple val(meta), path(input_files)
@@ -15,11 +15,13 @@ process MULTIQC_PCA {
 	path("norm_counts.genes"), emit: norm_counts
 	path("raw_counts.genes"), emit: raw_counts
     path("Sample_Clustering_matrix.tsv"), emit: sample_clustering
+    path("normalized_gene_counts_select.yaml"), emit: genes_select
+
 	
 	
     script:
     """
-    multiqc_pca.R -type ${wtype} -dgenes ${dgenes} -desc ${desc}  ${extrapars} 
+    multiqc_pca.R -type ${wtype} -dgenes ${dgenes} -desc ${desc} ${extrapars} 
     """
 }
 

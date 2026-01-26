@@ -16,6 +16,8 @@ parser$add_argument("-dtrans", "--Desc_Tx", type="character", default="tx2gene.c
 parser$add_argument("-strand", "--Strand_id", type="integer", default=4, help="Strand to analyze, 2: unstranded, 3: forward, 4 reverse (ONLY FOR STAR) [default %(default)s]")
 parser$add_argument("-batch", "--add_batch", action='store_true', help="Remove batch effect using the column batch in desc file")
 parser$add_argument("-pcnum", "--Number_principal_components", type="integer", default=4, help="Number of principal components (one for each column) data to extract to the data table, [default %(default)s]")
+parser$add_argument("-genes", "--Gene_list", type="character", default="", help="Comma separated list of genes (max 10), for boxplot gene expression between conditions (e.g: -genes Slc26a4,Cd276,Cyth4)")
+
 
 #Get command line options, if help option encountered - print help and exit:
 args <- parser$parse_args()
@@ -80,14 +82,25 @@ if (args$Desc_genes != "") {
 
     # Get results
     desc <- makeDesc(args$Desc_genes)
-    printCounts(dds, desc)
-
+    norm_counts <- printCounts(dds, desc)
+    
 
 }
 
 
-## Sample CLustering table
+###### Sample CLustering table
 
 sample_clustering_matrix <- sample_clustering(vsd)
 
 write.table(sample_clustering_matrix, file="Sample_Clustering_matrix.tsv", sep="\t", quote=FALSE, row.names=TRUE, col.names=NA)
+
+
+####### Gene expression boxplot 
+
+library(yaml)
+
+norm <- norm_counts
+gene_list <- normalize_gene_name(unlist(strsplit(args$Gene_list, ",")))
+desc_table <- read.csv(args$Desc_exp, sep = "\t", header = T)
+
+gene_expression_yaml(norm_counts = norm,  genes = gene_list,  intgroup = "condition",  desc = desc_table)

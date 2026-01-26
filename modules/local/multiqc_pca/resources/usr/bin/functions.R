@@ -1,9 +1,15 @@
 suppressMessages(library("argparse"))
 suppressMessages(library("stringr"))
 suppressMessages(library("DESeq2"))
-suppressMessages(library("EnhancedVolcano"))
+#suppressMessages(library("EnhancedVolcano"))
 suppressMessages(library("tximport"))
 suppressMessages(library("pheatmap"))
+suppressMessages(library("yaml"))
+suppressMessages(library("tidyverse"))
+suppressMessages(library("dplyr"))
+suppressMessages(library("tidyr"))
+
+
 
 
 ##Argument parser:
@@ -355,6 +361,8 @@ printCounts <- function(dds, desc, ofile=NULL) {
  
     write.csv(resMerged3, file=raw_genes_f, row.names = FALSE)
 
+    return(resMerged2)
+
 }
 
 printContrGenes <- function(rot_sel, desc) {
@@ -365,4 +373,82 @@ printContrGenes <- function(rot_sel, desc) {
 
 }
 
+## Function to uppercase gene names and remove any symbol except letters and numbers. 
 
+
+normalize_gene_name <- function(x) {
+     toupper(gsub("[^A-Z0-9]", "", x))
+}
+
+## Given a gene list in pca params, looks for the count in norm_counts, and write a yaml file with the counts grouped by gene and condition. This info will be given to multiqc to create gene boxplot for each group.
+
+gene_expression_yaml <- function(norm_counts, genes, desc, intgroup = "condition") {
+  
+  ## Substitute the "." for "-" to match norm count colnames with desc$file names
+  
+  cols <- 2:(ncol(norm_counts) - 2)
+  colnames(norm_counts)[cols] <- gsub("\\.", "-", colnames(norm_counts)[cols])
+  
+
+  
+  ## ---- Identify columns ----
+  norm_counts <- norm_counts[,-length(norm_counts)] ##Removing gene type column 
+  gene_name_col <- colnames(norm_counts)[length(norm_counts)] 
+  gene_id_col <- colnames(norm_counts)[1]
+  
+  ## Normalization of gene name column to match the gene list
+  
+  norm_counts$gene_name_norm <- normalize_gene_name(
+    norm_counts[[gene_name_col]]
+  )
+  
+  ## ---- Sanity checks ----
+  if(!(intgroup %in% colnames(desc)))
+    stop(paste("intgroup Column:",intgroup,"not found in your desc.txt"))
+  
+  ## Mapping interested genes in norm_counts
+  
+  #expr_filt <- norm_counts[norm_counts[[gene_name_col]] %in% genes, ]
+  expr_filt <- norm_counts[
+    norm_counts$gene_name_norm %in% genes,
+  ]
+  
+  if (nrow(expr_filt) == 0)
+    stop("genes not found in norm_counts")
+  
+  ## ---- Identify sample columns ----
+  sample_cols <- setdiff(
+    colnames(expr_filt),
+    c(gene_id_col, gene_name_col,"gene_name_norm")
+  )
+  
+  ## ---- Build file → condition lookup ----
+  condition_map <- setNames(desc[[intgroup]], desc$file)
+  
+  ## ---- Build YAML structure ----
+  yaml_list <- list()
+  
+  for (i in seq_len(nrow(expr_filt))) {
+    
+    gene <- expr_filt[[gene_name_col]][i]
+    gene_entry <- list()
+    
+    for (col in sample_cols) {
+      val <- expr_filt[i, col]
+      
+      if (!is.na(val) && val != 0) {
+        condition <- condition_map[[col]]
+        gene_entry[[condition]] <- c(gene_entry[[condition]], val)
+      }
+    }
+    
+    yaml_list[[gene]] <- gene_entry
+  }
+  
+  ## ---- Write YAML ----
+  yaml::write_yaml(yaml_list, "normalized_gene_counts_select.yaml")
+  
+  invisible(yaml_list)
+
+  
+}
