@@ -1,0 +1,15 @@
+name: dorado_basecaller
+description: Module to use Dorado Basecall for ONT Nanopore data
+keywords:
+  - basecall
+tools:
+  - dorado:
+      description: Dorado is a high-performance, easy-to-use, open source analysis 
+      engine for Oxford Nanopore reads.
+        
+      homepage: https://github.com/nanoporetech/dorado
+      documentation: https://github.com/nanoporetech/dorado
+      tool_dev_url: https://github.com/nanoporetech/dorado
+      licence:
+        - Oxford Nanopore Technologies PLC. (Public License, v. 1.0)
+      identifier: ""
