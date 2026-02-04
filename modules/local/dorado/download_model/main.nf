@@ -21,13 +21,22 @@ process DORADO_DOWNLOAD_MODEL {
  
  
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def down_pars = args.split(" ").find { it.contains('@') }
+    def down_pars2 = args.trim().tokenize()[0]
+  
     """
     
-    dorado basecaller ${args} --max-reads 1 --models-directory \$PWD/${models} ./ > test.bam; 
-     
+    if dorado basecaller ${down_pars2} --max-reads 1 --models-directory \$PWD/${models} ./ > test.bam; 
+        then
+        	echo "Automatic model download succeeded"
+    else 
+        	echo "Trying the manual download...";
+	        dorado download --model ${down_pars} --models-directory \$PWD/${models}
+	fi
+       
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        dorado: \$(dorado --version 2>&1 | head -n1 | cut -d "-" -f 2) 
+        dorado: \$(dorado --version 2>&1 | head -n1 | cut -d "-" -f 2 | cut -d "+" -f 1) 
 END_VERSIONS
    """
 }
