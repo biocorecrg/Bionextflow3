@@ -9,7 +9,7 @@ process DORADO_BASECALL {
     path  models
     
     output:
-    tuple val(idfile), path("*.bam")        , emit: basecalled_bam
+    tuple val(meta), path("*.bam")          , emit: basecalled_bam
     path "versions.yml"                     , emit: versions
 
     when:

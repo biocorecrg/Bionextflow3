@@ -8,8 +8,8 @@ process DORADO_DOWNLOAD_MODEL {
     tuple val(meta), path(pod5)
     
     output:
-    path "dorado_models"        , type:'dir', emit: modelfolder
-    path "versions.yml"                     , emit: versions
+    path("dorado_models")        , type:'dir', emit: modelfolder
+    path("versions.yml")                     , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
