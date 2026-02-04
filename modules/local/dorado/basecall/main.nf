@@ -23,11 +23,11 @@ process DORADO_BASECALL {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     
-    dorado basecaller  --models-directory ./ ${args} ./ > ${prefix}.bam                 
+    dorado basecaller  --models-directory ./${models} ${args} ./ > ${prefix}.bam                 
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        dorado: \$(dorado --version 2>&1 | head -n1 | cut -d "-" -f 2) 
+        dorado: \$(dorado --version 2>&1 | head -n1 | cut -d "-" -f 2 | cut -d "+" -f 1) 
 END_VERSIONS
-   """
+    """
 }

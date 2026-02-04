@@ -6,10 +6,9 @@ process DORADO_DOWNLOAD_MODEL {
 
     input:
     tuple val(meta), path(pod5)
-    path models
     
     output:
-    path models                 , type:'dir', emit: modelfolder
+    path "dorado_models"        , type:'dir', emit: modelfolder
     path "versions.yml"                     , emit: versions
 
     when:
@@ -25,13 +24,13 @@ process DORADO_DOWNLOAD_MODEL {
     def down_pars2 = args.trim().tokenize()[0]
   
     """
-    
-    if dorado basecaller ${down_pars2} --max-reads 1 --models-directory \$PWD/${models} ./ > test.bam; 
+    mkdir dorado_models
+    if dorado basecaller ${down_pars2} --max-reads 1 --models-directory \$PWD/dorado_models ./ > test.bam; 
         then
         	echo "Automatic model download succeeded"
     else 
         	echo "Trying the manual download...";
-	        dorado download --model ${down_pars} --models-directory \$PWD/${models}
+	        dorado download --model ${down_pars} --models-directory \$PWD/dorado_models
 	fi
        
     cat <<-END_VERSIONS > versions.yml
