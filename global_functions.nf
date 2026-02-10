@@ -70,7 +70,7 @@ def add_report_header_info(multiqc_file, values) {
 
 
 // empty map for nf-core modules
-def empyMeta() {
+def emptyMeta() {
     return [[:], []]
 }
 
