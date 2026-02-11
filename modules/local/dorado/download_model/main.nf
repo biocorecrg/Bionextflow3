@@ -16,7 +16,7 @@ process DORADO_DOWNLOAD_MODEL {
 
     script:
  
-    args = task.ext.args ?: ''
+    def args = task.ext.args ?: ''
  
  
     def prefix = task.ext.prefix ?: "${meta.id}"
