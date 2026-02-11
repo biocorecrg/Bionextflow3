@@ -1,0 +1,15 @@
+name: seqtagger
+description: Module to use seqtagger demultiplexing for ONT nanopore reads
+keywords:
+  - demultiplex
+tools:
+  - seqtagger:
+      description: Seqtagger is a super-fast and accurate demultiplexing algorithm for direct RNA nanopore sequencing datasets
+        
+      homepage: https://github.com/novoalab/SeqTagger
+      documentation: https://github.com/novoalab/SeqTagger
+      tool_dev_url: https://github.com/novoalab/SeqTagger
+      licence:
+        - Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC-ND 4.0)
+      identifier: ""
+      doi: doi.org/10.1101/gr.279290.124
