@@ -1,0 +1,13 @@
+name: "isoquant"
+description: genome-based analysis of long RNA reads
+keywords:
+  - isoquant
+tools:
+  - "isoquant":
+      description: "IsoQuant is a tool for the genome-based analysis of long RNA reads,
+                    such as PacBio or Oxford Nanopores. IsoQuant allows reconstructing 
+                    and quantifying transcript models with high precision and decent recall."
+      homepage: "https://github.com/ablab/IsoQuant"
+      documentation: "https://ablab.github.io/IsoQuant/"
+      doi: "https://doi.org/10.1038/s41587-022-01565-y"
+      licence: ["GNU2"]

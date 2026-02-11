@@ -1,0 +1,45 @@
+process NANOQ_STATS {
+    tag "${meta.id}"
+    label 'process_low'
+
+    conda "${moduleDir}/environment.yml"
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/nanoq:0.10.0--h031d066_2'
+        : 'biocontainers/nanoq:0.10.0--h031d066_2'}"
+
+    input:
+    tuple val(meta), path(ontreads)
+
+    output:
+    tuple val(meta), path("*.{stats,json}")            , emit: stats
+    path "versions.yml"                                , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def args = task.ext.args ?: ''
+    prefix = task.ext.prefix ?: "${meta.id}_filtered"
+    """
+    nanoq -i ${ontreads} \\
+        ${args} -s \\
+        -r ${prefix}.stats \\
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        nanoq: \$(nanoq --version | sed -e 's/nanoq //g')
+    END_VERSIONS
+    """
+
+    stub:
+    prefix = task.ext.prefix ?: "${meta.id}_filtered"
+    """
+    echo "" | gzip > ${prefix}.${output_format}
+    touch ${prefix}.stats
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        nanoq: \$(nanoq --version | sed -e 's/nanoq //g')
+    END_VERSIONS
+    """
+}

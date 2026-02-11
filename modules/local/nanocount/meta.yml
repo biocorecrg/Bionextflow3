@@ -1,0 +1,15 @@
+name: "nanocount"
+description: count how many reads map to each feature
+keywords:
+  - nanocount
+tools:
+  - "nanocount":
+      description: "NanoCount estimates transcripts abundance from Oxford Nanopore 
+                    direct-RNA sequencing datasets, using an expectation-maximization
+                    approach like RSEM, Kallisto, salmon, etc to handle the uncertainty
+                    of multi-mapping reads"
+      homepage: "https://github.com/a-slide/NanoCount"
+      documentation: "https://a-slide.github.io/NanoCount/"
+      doi: "https://doi.org/10.1093/nar/gkab1129"
+      licence: ["MIT"]
+      identifier: biotools:nanocount
