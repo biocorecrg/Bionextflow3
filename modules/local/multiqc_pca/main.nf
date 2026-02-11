@@ -12,10 +12,11 @@ process MULTIQC_PCA {
     output:
     path("*_data.tsv"), emit: data
     path("*_variance.tsv"), emit: variance
-	path("norm_counts.genes"), emit: norm_counts
-	path("raw_counts.genes"), emit: raw_counts
+    path("norm_counts.genes"), emit: norm_counts
+    path("raw_counts.genes"), emit: raw_counts
     path("Sample_Clustering_matrix.tsv"), emit: sample_clustering
-    path("normalized_gene_counts_select.yaml"), emit: genes_select
+    path("vst*boxplot.png"), emit: vst_genes_boxplot, optional: true
+    path("log2_deseq_norm*boxplot.png"), emit: norm_genes_boxplot, optional:true
 
 	
 	
