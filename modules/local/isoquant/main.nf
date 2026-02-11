@@ -29,7 +29,7 @@ process ISOQUANT {
     --reference ${genome} \\
     --genedb ${annotation} \\
     --bam ${bam} \\
-    ${args}
+    ${args} \\
     -o ./
 
     cat <<-END_VERSIONS > versions.yml
