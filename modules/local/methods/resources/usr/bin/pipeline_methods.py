@@ -27,8 +27,8 @@ all_tools_info  = methods_data['tools']
 workflow        = methods_data['workflow']
 pipeline_name   = list(workflow.keys())[1]
 
-parameters_info = mymethods['progPars']
-reporting_info  = mymethods['reporting']
+parameters_info = mymethods.get('progPars', {})
+reporting_info  = mymethods.get('reporting', {})
 
 citations_info  = {}
 versions_info   = {}

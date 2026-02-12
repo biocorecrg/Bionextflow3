@@ -12,7 +12,7 @@ process NANOSTAT {
 
     output:
     tuple val(meta), path("*.txt")                 , emit: txt
-    path  "versions.yml"                           , emit: versions
+    tuple val("${task.process}"), val("nanostat"), eval("NanoStat -v | cut -d ' ' -f 2"), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,10 +28,7 @@ process NANOSTAT {
         --tsv -o ./ \\
         -n ${meta.id}_nanostat.txt
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        nanostat: \$(echo \$(NanoStat -v 2>&1) | sed 's/^.*NanoStat //; s/ .*\$//')
-    END_VERSIONS
+
     """
 
     stub:
@@ -47,9 +44,6 @@ process NANOSTAT {
     touch Yield_By_Length.html
 
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        nanoplot: \$(echo \$(NanoPlot --version 2>&1) | sed 's/^.*NanoPlot //; s/ .*\$//')
-    END_VERSIONS
+
     """
 }

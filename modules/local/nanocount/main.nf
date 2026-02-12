@@ -12,7 +12,7 @@ process NANOCOUNT {
 
     output:
     tuple val(meta), path("*.txt"), emit: txt
-    path "versions.yml"           , emit: versions
+    tuple val("${task.process}"), val("nanocount"), eval("NanoCount --version | sed 's/NanoCount v//'"), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -27,10 +27,7 @@ process NANOCOUNT {
     -o ${prefix}.txt \\
     ${args}
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        nanocount: \$(echo \$(NanoCount --version ))
-    END_VERSIONS
+
     """
 
 

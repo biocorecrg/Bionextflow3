@@ -4,7 +4,7 @@ process METHODS_SECTION {
     container 'biocorecrg/methods:0.1'
 
     input:
-    path(pipeline_paths)
+    path pipeline_paths, stageAs: "?/*"
     path(params_file)
     path(template)
     path(nf_core)

@@ -12,7 +12,7 @@ process NANOQ_STATS {
 
     output:
     tuple val(meta), path("*.{stats,json}")            , emit: stats
-    path "versions.yml"                                , emit: versions
+    tuple val("${task.process}"), val("nanoq"), eval("nanoq --version"), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,10 +25,7 @@ process NANOQ_STATS {
         ${args} -s \\
         -r ${prefix}.stats \\
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        nanoq: \$(nanoq --version | sed -e 's/nanoq //g')
-    END_VERSIONS
+
     """
 
     stub:
@@ -37,9 +34,6 @@ process NANOQ_STATS {
     echo "" | gzip > ${prefix}.${output_format}
     touch ${prefix}.stats
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        nanoq: \$(nanoq --version | sed -e 's/nanoq //g')
-    END_VERSIONS
+
     """
 }

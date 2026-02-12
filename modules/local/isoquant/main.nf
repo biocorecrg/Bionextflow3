@@ -15,7 +15,7 @@ process ISOQUANT {
   
     output:
     tuple val(meta), path("OUT/*"), emit: out
-    path "versions.yml"           , emit: versions
+    tuple val("${task.process}"), val("isoquant"), eval("isoquant.py --version | cut -d ' ' -f 2"), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -23,19 +23,17 @@ process ISOQUANT {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def genedb_cmd = annotation ? "--genedb ${annotation}" : ''
 
     """
     isoquant.py --threads ${task.cpus} \\
     --reference ${genome} \\
-    --genedb ${annotation} \\
+    ${genedb_cmd} \\
     --bam ${bam} \\
     ${args} \\
     -o ./
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        isoquant: \$(echo \$(isoquant.py --version ))
-    END_VERSIONS
+
     """
 
 

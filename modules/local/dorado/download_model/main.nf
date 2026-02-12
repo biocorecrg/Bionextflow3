@@ -9,7 +9,7 @@ process DORADO_DOWNLOAD_MODEL {
     
     output:
     path("dorado_models")        , type:'dir', emit: modelfolder
-    path("versions.yml")                     , emit: versions
+    tuple val("${task.process}"), val("dorado"), eval("dorado --version 2>&1 | head -n1 | cut -d '-' -f 2 | cut -d '+' -f 1"), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -33,10 +33,5 @@ process DORADO_DOWNLOAD_MODEL {
 	        dorado download --model ${down_pars} --models-directory \$PWD/dorado_models
 	fi
        
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        dorado: \$(dorado --version 2>&1 | head -n1 | cut -d "-" -f 2 | cut -d "+" -f 1) 
-END_VERSIONS
    """
 }
-

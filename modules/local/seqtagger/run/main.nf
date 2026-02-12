@@ -11,6 +11,7 @@ process SEQTAGGER {
     output:
  	tuple val(meta), path("*_demux.tsv.gz"), emit: demux_files
 	tuple val(meta), path("*.boxplot.pdf") , emit: demux_boxplot
+    tuple val("${task.process}"), val("seqtagger"), eval("run --version 2>&1"), topic: versions, emit: versions
     
     when:
     task.ext.when == null || task.ext.when
@@ -29,9 +30,5 @@ process SEQTAGGER {
     	mv temp_output/..demux.tsv.gz ${prefix}_demux.tsv.gz
     	mv temp_output/..demux.tsv.gz.boxplot.pdf ${prefix}.boxplot.pdf
       
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        seqtagger: \$(run --version 2>&1) 
-END_VERSIONS
     """
 }

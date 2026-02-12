@@ -10,7 +10,7 @@ process DORADO_BASECALL {
     
     output:
     tuple val(meta), path("*.bam")          , emit: basecalled_bam
-    path "versions.yml"                     , emit: versions
+    tuple val("${task.process}"), val("dorado"), eval("dorado --version 2>&1 | head -n1 | cut -d '-' -f 2 | cut -d '+' -f 1"), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,9 +25,6 @@ process DORADO_BASECALL {
     
     dorado basecaller  --models-directory ./${models} ${args} ./ > ${prefix}.bam                 
     
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        dorado: \$(dorado --version 2>&1 | head -n1 | cut -d "-" -f 2 | cut -d "+" -f 1) 
-END_VERSIONS
+
     """
 }
