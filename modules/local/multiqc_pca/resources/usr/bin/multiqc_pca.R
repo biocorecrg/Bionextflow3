@@ -65,7 +65,7 @@ unique_vals<- unique(pca_data[[condition]])
 num_unique <- length(unique_vals)
 
 # Generate distinct colors dynamically
-color_palette <- c("#f5d905","#db14ce","#3d98bf","#2114db","#db1432","#14db1e","#db9c14","#3dbfac","#5c5952","#4f0e29") # Creates distinct colors
+color_palette <- c("black","#1C9BCD", "darkred","darkgreen", "#E69F00", "blue", "magenta","#db1432","#14db1e","#db9c14","#3dbfac","#5c5952","#4f0e29") # Creates distinct colors
 
 # Create a lookup table
 color_map <- setNames(color_palette[1:num_unique], unique_vals)
@@ -95,12 +95,29 @@ sample_clustering_matrix <- sample_clustering(vsd)
 write.table(sample_clustering_matrix, file="Sample_Clustering_matrix.tsv", sep="\t", quote=FALSE, row.names=TRUE, col.names=NA)
 
 
-####### Gene expression boxplot 
+####### Gene list expression boxplots for vst and log2(deseq-normalized)
 
-library(yaml)
+if (args$Gene_list != "") {
 
-norm <- norm_counts
-gene_list <- normalize_gene_name(unlist(strsplit(args$Gene_list, ",")))
-desc_table <- read.csv(args$Desc_exp, sep = "\t", header = T)
+	norm <- norm_counts
+	genes <- normalize_gene_name(unlist(strsplit(args$Gene_list, ",")))
+	desc_table <- read.csv(args$Desc_exp, sep = "\t", header = T)
 
-gene_expression_yaml(norm_counts = norm,  genes = gene_list,  intgroup = "condition",  desc = desc_table)
+	#gene_expression_yaml(norm_counts = norm,  genes = gene_list,  intgroup = "condition",  desc = desc_table)
+
+
+	vst_mat <- assay(vsd)
+
+	norm <- counts(dds, normalized = T)
+	norm_log <- log2(norm)
+
+	gene_desc <- read.csv(args$Desc_genes, sep = "\t", header = T)
+
+	groups <- colData(dds)[[1]]
+	groups
+
+
+	genes_boxplot(norm_counts = norm_log, groups = groups,genes_desc =  gene_desc,genes =  genes, title = "log2_deseq_norm")
+	genes_boxplot(norm_counts = vst_mat, groups = groups,genes_desc =  gene_desc,genes =  genes, title = "vst")
+
+}

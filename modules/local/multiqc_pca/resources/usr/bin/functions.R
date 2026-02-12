@@ -8,6 +8,7 @@ suppressMessages(library("yaml"))
 suppressMessages(library("tidyverse"))
 suppressMessages(library("dplyr"))
 suppressMessages(library("tidyr"))
+suppressMessages(library("ggrepel"))
 
 
 
@@ -377,8 +378,9 @@ printContrGenes <- function(rot_sel, desc) {
 
 
 normalize_gene_name <- function(x) {
-     toupper(gsub("[^A-Z0-9]", "", x))
+  gsub("[^A-Z0-9]", "", toupper(x))
 }
+
 
 ## Given a gene list in pca params, looks for the count in norm_counts, and write a yaml file with the counts grouped by gene and condition. This info will be given to multiqc to create gene boxplot for each group.
 
@@ -452,3 +454,80 @@ gene_expression_yaml <- function(norm_counts, genes, desc, intgroup = "condition
 
   
 }
+
+genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title) {
+
+
+
+  gene_desc$gene_name_norm <- normalize_gene_name(gene_desc[,2])
+
+  genes_match <- gene_desc[gene_desc$gene_name_norm %in% genes, ]
+
+  if (nrow(genes_match) < 1) {
+    print(paste0("Gene names: ",genes,"NOT found in gene_desc.txt"))}
+  else {
+  print(paste0("Gene name: ",genes_match$gene_name," found in gene_desc.txt"))
+
+  #groups <- colData(vsd)[[1]]
+
+  ## selecting vst counts for specific genes
+  a <- vst_mat[rownames(vst_mat) %in% genes_match[[1]],]
+
+  ab <- merge(a, genes_match, by.x=0, by.y="gene_id")
+  rownames(ab) <- paste0(ab$gene_name,"_(",ab$Row.names,")")
+
+  ## removing gene type, and gene name
+  ab <- subset(ab, select=-c(Row.names,gene_name,gene_type,gene_name_norm))
+
+  gene_cols <- rownames(ab)
+
+  d <- t(ab)
+  b <- colData(vsd)
+  df <- merge(d,b, by = 0)
+
+  ## Adding a new column with a short name of the sample for point labels
+  df$sample_short <- sapply(
+    strsplit(df$Row.names, "_"),
+    function(x) paste(head(x, 2), collapse = "_")
+  )
+
+  ## Transforming table to have all the information all expression values
+  df_long <- df |>
+    pivot_longer(
+      cols = all_of(gene_cols),
+      names_to = "gene",
+      values_to = "expression"
+    )
+
+  ## Creating a plot for each gene, wir one boxplot for condition
+  ggplot(df_long, aes(x = condition, y = expression, fill = condition)) +
+    geom_boxplot(width = 0.3 ,alpha = 0.20) +
+    scale_fill_manual(values = c("black","#1C9BCD", "darkred","darkgreen", "#E69F00", "blue", "magenta")) +
+    geom_jitter( shape = 21,              # supports fill + border
+                 color = "black",         # border
+                 alpha = 0.9,             # fill transparency
+                 size = 2,
+                 width = 0.2) +
+    geom_text_repel(
+      aes(label = sample_short),
+      size = 2.5,
+      show.legend = FALSE
+    ) +
+    facet_wrap(~ gene, nrow = 2, scales = "free_y") +
+    labs(
+      x = "Group",
+      y = title,
+      fill = "Group"
+    ) +
+    theme_bw() +
+    theme(
+      strip.background = element_rect(fill = "grey90"),
+      strip.text = element_text(face = "bold")
+    )
+  ggsave(paste(title,"genes_boxplot.png",sep="_"), width = 600,
+         height =800 ,
+         units = "px",
+         dpi = 76)
+  }
+}
+
