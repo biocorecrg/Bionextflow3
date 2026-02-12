@@ -12,8 +12,8 @@ process HTSEQ_COUNT {
     tuple val(meta2), path(gtf)
 
     output:
-    tuple val(meta), path("*.txt"), emit: txt
-    tuple val(meta), path("*_anno.bam"), emit: bam optional true
+    tuple val(meta), path("*.txt")                      , emit: txt
+    tuple val(meta), path("*_anno.bam"),  optional: true, emit: bam
     tuple val("${task.process}"), val("htseq"), eval("htseq-count --version | sed 's/^.*htseq-count //; s/Using.*\$//'"), topic: versions, emit: versions
 
     when:
