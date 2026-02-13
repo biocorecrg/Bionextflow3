@@ -20,6 +20,6 @@ process JOIN_BAM_STATS {
 # plot_type: \'table\'
 # section_name: \'Alignment QC\' ' > alnQC_mqc.txt
     cat alnqc_* | head -n 1| sed s@#@@g >> alnQC_mqc.txt
-    cat alnqc_* | grep -v "#" >> alnQC_mqc.txt
+    cat alnqc_* | grep -v "#" | sed s@_s.bam@@g>> alnQC_mqc.txt
      """
 }
