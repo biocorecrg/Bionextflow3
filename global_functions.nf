@@ -28,6 +28,7 @@ def notify_slack(text, hook) {
 
 }
 
+
 // end of pipeline
 def end_messaged(hook) {
     def text = final_message(workflow.manifest.name)
