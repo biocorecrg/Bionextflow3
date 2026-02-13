@@ -19,21 +19,70 @@ def colorCodes() {
 
 // notify
 def notify_slack(text, hook) {
-    def myFile = file('./notify.json')
+    def myFile = File.createTempFile('notify', '.json')
     myFile << '{"text": "'
     myFile << text.replace("\n",'\\n')
     myFile << '"}'
-    println "curl -X POST -H 'Content-type: application/json' -d @./notify.json ${hook}".execute().text
+    def cmd = [
+        "curl",
+        "-s",
+        "-X", "POST",
+        "-H", "Content-type: application/json",
+        "-d", "@${myFile.absolutePath}",
+        hook
+    ]
+
+    def proc = cmd.execute()
+    proc.waitFor()
+
+    log.info "Slack response: ${proc.text}"
+
     myFile.delete()
 
 }
 
+// upload to custom LIMS
+def upload_to_lims(text) {
+    if (params.lims_api_base_url) {
+    	update_lims_status(params.lims_username, params.lims_api_key, params.lims_api_base_url, params.lims_pipeline_execution_id)
+    }
+}
+
+def update_lims_status(user, apikey, lims_base, pipe_id) {
+    //def mystatus = success ? 'SU' : 'FA'
+    def mystatus = 'SU'
+    def myFile = File.createTempFile('notify', '.json')
+    myFile.text = """{"status": "${mystatus}"}"""
+
+    def cmd = [
+        "curl",
+        "-s",
+        "-k",
+        "-X", "PATCH",
+        "-H", "Content-Type: application/json",
+        "-H", "Authorization: ApiKey ${user}:${apikey}",
+        "-d", "@${myFile.absolutePath}",
+        "${lims_base}/${pipe_id}"
+    ]
+
+
+    def proc = cmd.execute()
+    proc.waitFor()
+
+    log.info "LIMS response: ${proc.text}"
+    log.info "Payload file: ${myFile.absolutePath}"
+    log.info "${cmd}.join(' ')"
+
+    //myFile.delete()
+}
 
 // end of pipeline
 def end_messaged(hook) {
     def text = final_message(workflow.manifest.name)
     println text
-    slackhook = env("${hook}") ?: hook
+    slackhook = hook ?: System.getenv('HOOK')
+    log.info "${slackhook}"
+    upload_to_lims(text)
     slackhook ? notify_slack(text, slackhook) : null
 
 }
