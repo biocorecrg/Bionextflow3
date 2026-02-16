@@ -43,7 +43,7 @@ def notify_slack(text, hook) {
 
 // upload to custom LIMS
 def upload_to_lims(text) {
-    if (params.lims_api_base_url) {
+    if (params.containsKey('lims_api_base_url') && params.lims_api_base_url) {
     	update_lims_status(params.lims_username, params.lims_api_key, params.lims_api_base_url, params.lims_pipeline_execution_id)
     }
 }
@@ -81,9 +81,8 @@ def end_messaged(hook) {
     def text = final_message(workflow.manifest.name)
     println text
     slackhook = hook ?: System.getenv('HOOK')
-    log.info "${slackhook}"
     upload_to_lims(text)
-    slackhook ? notify_slack(text, slackhook) : null
+    (slackhook && slackhook != 'skip') ? notify_slack(text, slackhook) : null
 
 }
 
