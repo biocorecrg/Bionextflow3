@@ -3,7 +3,7 @@ process CITATION_JS {
     label 'process_low'
 
     // Use container or otherwise use wave using Dockerfile available
-    container "biocorecrg/citation-js:0.7.18"
+    container "docker.io/biocorecrg/citation-js:0.7.18"
 
     input:
     tuple val(meta), val(doi), val(format), val(citation_template)

@@ -3,8 +3,8 @@ process GTF_TO_TX2GENE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'biocorecrg/almalinux-perlbrew-pyenv3':
-        'biocorecrg/almalinux-perlbrew-pyenv3' }"
+        'docker.io/biocorecrg/almalinux-perlbrew-pyenv3':
+        'docker.io/biocorecrg/almalinux-perlbrew-pyenv3' }"
 
     input:
     tuple val(meta), path(gtffile)

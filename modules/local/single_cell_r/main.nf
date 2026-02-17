@@ -3,7 +3,7 @@
 */
 
 params.LABEL = ""
-params.CONTAINER = 'biocorecrg/sc_benchmark:0.2'
+params.CONTAINER = 'docker.io/biocorecrg/sc_benchmark:0.2'
 
 params.OUTPUT = ""
 
