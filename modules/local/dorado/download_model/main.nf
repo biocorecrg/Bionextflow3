@@ -1,6 +1,6 @@
 process DORADO_DOWNLOAD_MODEL {
     tag "$meta.id"
-    label 'process_high'
+    label 'gpu'
 
     container "docker.io/ontresearch/dorado:sha00aa724a69ddc5f47d82bd413039f912fdaf4e77"
 
