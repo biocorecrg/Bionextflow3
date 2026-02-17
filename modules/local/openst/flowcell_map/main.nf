@@ -4,8 +4,8 @@ process FLOWCELL_MAP {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'biocorecrg/openst:0.2.3'  :
-        'biocorecrg/openst:0.2.3' }"
+        'docker.io/biocorecrg/openst:0.2.3'  :
+        'docker.io/biocorecrg/openst:0.2.3' }"
 
     input:
     tuple val(meta), path(bcl)

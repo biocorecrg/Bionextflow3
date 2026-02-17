@@ -4,8 +4,8 @@ process SPACEMAKE_ADD_SPECIES {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'biocorecrg/spacemake:0.9.1' :
-        'biocorecrg/spacemake:0.9.1' }"
+        'docker.io/biocorecrg/spacemake:0.9.1' :
+        'docker.io/biocorecrg/spacemake:0.9.1' }"
 
     input:
     tuple val(meta), path(genome)

@@ -2,7 +2,7 @@ process PREPROC_CELLRANGER_MULTI {
     tag "$meta.id"
     label 'process_low'
 
-    container 'biocorecrg/sc_benchmark:0.2'
+    container 'docker.io/biocorecrg/sc_benchmark:0.2'
 
     input:
     tuple val(meta), path(quants_folder)
