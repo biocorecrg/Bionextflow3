@@ -2,7 +2,7 @@ process DORADO_BASECALL {
     tag "$meta.id"
     label 'gpu'
 
-    container "ontresearch/dorado:sha00aa724a69ddc5f47d82bd413039f912fdaf4e77"
+    container "docker.io/ontresearch/dorado:sha00aa724a69ddc5f47d82bd413039f912fdaf4e77"
 
     input:
     tuple val(meta), path(pod5)
