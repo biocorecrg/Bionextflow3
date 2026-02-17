@@ -6,7 +6,7 @@ process SEURAT {
     tag "$meta.id"
     label 'process_high_memory'
 
-    container 'biocorecrg/sc_benchmark:0.2'
+    container 'docker.io/biocorecrg/sc_benchmark:0.2'
 
     input:
     tuple val(meta), path("input_ori.rds")

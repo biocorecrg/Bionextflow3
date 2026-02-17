@@ -3,7 +3,7 @@ process SPLITPIPE_MKREF {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
-    container 'biocorecrg/spipe:1.6.1'
+    container 'docker.io/biocorecrg/spipe:1.6.1'
 
     input:
     tuple val(meta),   path(genome)

@@ -6,7 +6,7 @@ process MTX_MERGE {
     tag "$meta.id"
     label 'process_high_memory'
 
-    container 'docker://biocorecrg/sc_benchmark:0.2'
+    container 'docker://docker.io/biocorecrg/sc_benchmark:0.2'
 
     input:
     tuple val(meta), path("*")

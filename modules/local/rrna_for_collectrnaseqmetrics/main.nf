@@ -3,8 +3,8 @@ process RRNA_FOR_COLLECTRNASEQMETRICS {
     tag "${meta.id}"
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'biocorecrg/almalinux-perlbrew-pyenv3':
-        'biocorecrg/almalinux-perlbrew-pyenv3' }"
+        'docker.io/biocorecrg/almalinux-perlbrew-pyenv3':
+        'docker.io/biocorecrg/almalinux-perlbrew-pyenv3' }"
 
     input:
     tuple val(meta), path (faidx)

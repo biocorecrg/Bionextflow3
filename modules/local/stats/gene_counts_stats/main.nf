@@ -1,6 +1,6 @@
 process GENE_COUNTS_STATS {
 
-    container 'biocorecrg/multiqc:1.28'
+    container 'docker.io/biocorecrg/multiqc:1.28'
     label     'low'
 
     
