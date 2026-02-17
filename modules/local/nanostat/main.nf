@@ -8,7 +8,7 @@ process NANOSTAT {
         'biocontainers/nanostat:1.6.0--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(bam_file), path(bai_file)
+    tuple val(meta), path(input_file), path(index)
 
     output:
     tuple val(meta), path("*.txt")                 , emit: txt
@@ -20,16 +20,18 @@ process NANOSTAT {
     script:
     def args = task.ext.args ?: ''
    
+     script:
+    def format_flag = input_file.name.endsWith('.cram') ? '--cram' : '--bam'
+
     """
     NanoStat \\
         $args \\
         -t $task.cpus \\
-        --bam ${bam_file} \\
+        ${format_flag} ${input_file} \\
         --tsv -o ./ \\
         -n ${meta.id}_nanostat.txt
-
-
     """
+
 
     stub:
     """
