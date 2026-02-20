@@ -9,6 +9,7 @@ suppressMessages(library("tidyverse"))
 suppressMessages(library("dplyr"))
 suppressMessages(library("tidyr"))
 suppressMessages(library("ggrepel"))
+suppressMessages(library("sva"))
 
 
 
@@ -137,7 +138,15 @@ makeDDSFromMatrix <- function(input, desc, field) {
 #Make coldata for DESEq2
 makeColData <- function(desc_exp, fn) {
 	desc_data<-read.table(desc_exp, sep="\t", header=T)
+	
 	coldata<-desc_data[match(fn, desc_data$file),]
+
+	# Remove whitespace
+	desc_data$condition <- trimws(desc_data$condition)
+
+	# Convert to factor
+	desc_data$condition <- as.factor(desc_data$condition)
+
 	row.names(coldata)<-fn
 	if ("group" %in% names(coldata)) {
 		stop("****** 'group' cannot be in the names of the description file, please change it ******")
@@ -271,7 +280,7 @@ deduplicateIDs <- function(vec) {
 
 
 plotPCA_plus <- function (object, intgroup = "condition", ntop = 500, returnData = FALSE, pcnum=6) {
-    rv <- rowVars(assay(object), useNames=TRUE)
+    rv <- rowVars(assay(object))
     select <- order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
     pca <- prcomp(t(assay(object)[select, ]))
     percentVar <- pca$sdev^2/sum(pca$sdev^2)
@@ -455,34 +464,33 @@ gene_expression_yaml <- function(norm_counts, genes, desc, intgroup = "condition
   
 }
 
-genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title) {
+
+genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors = c("black","#1C9BCD", "darkred","darkgreen", "#E69F00", "blue", "magenta"), condition="condition") {
 
 
 
-  gene_desc$gene_name_norm <- normalize_gene_name(gene_desc[,2])
+  genes_desc$gene_name_norm <- normalize_gene_name(genes_desc[,2])
 
-  genes_match <- gene_desc[gene_desc$gene_name_norm %in% genes, ]
+  genes_match <- genes_desc[genes_desc$gene_name_norm %in% genes, ]
 
   if (nrow(genes_match) < 1) {
     print(paste0("Gene names: ",genes,"NOT found in gene_desc.txt"))}
   else {
-  print(paste0("Gene name: ",genes_match$gene_name," found in gene_desc.txt"))
-
-  #groups <- colData(vsd)[[1]]
+  print(paste0("Gene name: ",genes_match$gene.name," found in gene_desc.txt"))
 
   ## selecting vst counts for specific genes
-  a <- vst_mat[rownames(vst_mat) %in% genes_match[[1]],]
+  a <- norm_counts[rownames(norm_counts) %in% genes_match[[1]],]
 
-  ab <- merge(a, genes_match, by.x=0, by.y="gene_id")
-  rownames(ab) <- paste0(ab$gene_name,"_(",ab$Row.names,")")
+  ab <- merge(a, genes_match, by.x=0, by.y="gene.id")
+  rownames(ab) <- paste0(ab$gene.name,"_(",ab$Row.names,")")
 
   ## removing gene type, and gene name
-  ab <- subset(ab, select=-c(Row.names,gene_name,gene_type,gene_name_norm))
+  ab <- subset(ab, select=-c(Row.names,gene.name,gene.type,gene_name_norm))
 
   gene_cols <- rownames(ab)
 
   d <- t(ab)
-  b <- colData(vsd)
+  b <- data.frame(condition = groups, row.names = colnames(norm_counts))
   df <- merge(d,b, by = 0)
 
   ## Adding a new column with a short name of the sample for point labels
@@ -502,7 +510,7 @@ genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title) {
   ## Creating a plot for each gene, wir one boxplot for condition
   ggplot(df_long, aes(x = condition, y = expression, fill = condition)) +
     geom_boxplot(width = 0.3 ,alpha = 0.20) +
-    scale_fill_manual(values = c("black","#1C9BCD", "darkred","darkgreen", "#E69F00", "blue", "magenta")) +
+    scale_fill_manual(values = colors ) +
     geom_jitter( shape = 21,              # supports fill + border
                  color = "black",         # border
                  alpha = 0.9,             # fill transparency
@@ -531,3 +539,46 @@ genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title) {
   }
 }
 
+create_pca_data <- function(vsd, condition, pcnum, file_prefix, colors) {
+
+	p <- plotPCA_plus(vsd, intgroup=condition, returnData = TRUE, pcnum=pcnum)
+	pca_data <- p[["data"]]
+	pca_variance <- p[["variance"]]
+
+	# Generate distinct colors dynamically for the factor levels of the condition column 
+	unique_vals<- unique(pca_data[[condition]])
+	num_unique <- length(unique_vals)
+
+	# Generate distinct colors dynamically
+	color_palette <- colors # Creates distinct colors
+
+	# Create a lookup table
+	color_map <- setNames(color_palette[1:num_unique], unique_vals)
+
+	# Add a new column 'color' to pca_data
+	pca_data$color <- color_map[pca_data[[condition]]]
+
+	# Save PCA data and variance tables
+	write.table(pca_data, file=paste0(file_prefix,"_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
+	write.table(pca_variance, file=paste0(file_prefix,"_variance.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
+
+	return(list(data = pca_data, variance = pca_variance))
+}
+
+create_genes_boxplots <- function(dds, gene_list, groups,desc_genes, prefix, colors, condition) {
+	
+	genes <- normalize_gene_name(unlist(strsplit(gene_list, ",")))
+
+
+	#gene_expression_yaml(norm_counts = norm,  genes = gene_list,  intgroup = "condition",  desc = desc_table)
+	vsd<-makeVST(dds, FALSE)
+	vst_mat <- assay(vsd)
+
+	norm <- counts(dds, normalized = T)
+	norm_log <- log2(norm)
+
+	#print(paste0("Groups used for each gene boxplot:  ",groups))
+
+	genes_boxplot(norm_counts = norm_log, groups = groups,genes_desc =  desc_genes,genes =  genes, title = paste(prefix,"log2_deseq_norm",sep="_"), colors = colors, condition = condition)
+	genes_boxplot(norm_counts = vst_mat, groups = groups,genes_desc =  desc_genes,genes =  genes, title = paste(prefix,"vst",sep="_"), colors = colors, condition = condition)
+	}
