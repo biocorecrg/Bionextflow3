@@ -2,7 +2,7 @@ process DORADO_DOWNLOAD_MODEL {
     tag "$meta.id"
     label 'gpu'
 
-    container "docker.io/ontresearch/dorado:sha00aa724a69ddc5f47d82bd413039f912fdaf4e77"
+    container "docker.io/nanoporetech/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e"
 
     input:
     tuple val(meta), path(pod5)
