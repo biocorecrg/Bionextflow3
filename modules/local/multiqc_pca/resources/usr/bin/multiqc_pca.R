@@ -14,7 +14,7 @@ parser$add_argument("-type", "--Input_type", type="character", required="true", 
 parser$add_argument("-label", "--Add_labels", type="character", default="", help="Column to be used for labels")
 parser$add_argument("-dtrans", "--Desc_Tx", type="character", default="tx2gene.csv", help="Path to read tx2gene file (ONLY FOR SALMON) [default %(default)s]")
 parser$add_argument("-strand", "--Strand_id", type="integer", default=4, help="Strand to analyze, 2: unstranded, 3: forward, 4 reverse (ONLY FOR STAR) [default %(default)s]")
-parser$add_argument("-batch", "--add_batch", type="character", default="limma", help="Remove batch effect using the column batch in desc file: limma or combat")
+parser$add_argument("-batch", "--add_batch", type="character", default="", help="Remove batch effect using the column batch in desc file: limma or combat")
 parser$add_argument("-pcnum", "--Number_principal_components", type="integer", default=4, help="Number of principal components (one for each column) data to extract to the data table, [default %(default)s]")
 parser$add_argument("-genes", "--Gene_list", type="character", default="", help="Comma separated list of genes (max 10), for boxplot gene expression between conditions (e.g: -genes Slc26a4,Cd276,Cyth4)")
 
