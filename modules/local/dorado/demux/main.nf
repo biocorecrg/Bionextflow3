@@ -21,11 +21,12 @@ process DORADO_DEMUX {
  
  
     def prefix = task.ext.prefix ?: "${meta.id}"
+
     """
     dorado demux --emit-summary $args --threads ${task.cpus} --output-dir ./ ${bam}
     gzip *_summary.txt
     # Avoid the folder structure from dorado
-    mv */*/*/bam_pass/*/*.bam .
+    mv */*/*/bam_pass/*/*.* .
 
 
     """
