@@ -1,0 +1,12 @@
+name: ucsc_fasplit
+description: Split a fasta file into several files.
+keywords:
+  - bed
+  - genomics
+  - ucsc
+tools:
+  - ucsc:
+      description: Split a fasta file into several files.
+      homepage: http://hgdownload.cse.ucsc.edu/admin/exe/
+      licence: ["varies; see http://genome.ucsc.edu/license"]
+      identifier: ""
