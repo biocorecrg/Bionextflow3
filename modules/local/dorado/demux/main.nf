@@ -26,7 +26,7 @@ process DORADO_DEMUX {
     dorado demux --emit-summary $args --threads ${task.cpus} --output-dir ./ ${bam}
     gzip *_summary.txt
     # Avoid the folder structure from dorado
-    mv */*/*/bam_pass/*/*.* .
+    find . -mindepth 2 -name "*.cram" -exec mv -t . {} +
 
 
     """
