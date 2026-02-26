@@ -1,5 +1,5 @@
 process EPINANO_PLOTS {
-    tag "$meta.id"
+    tag "$meta.id vs $meta2.id"
     label 'process_middle'
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -7,12 +7,12 @@ process EPINANO_PLOTS {
         'docker.io/biocorecrg/epinanoplots:0.1' }"
 
     input:
-    tuple val(meta), path(alnfile), path(alnindex)
+    tuple val(meta), path(per_site_varA)
+    tuple val(meta2), path(per_site_varB)
     val(mode)
 
    // input:
    // tuple val(sampleIDA), val(sampleIDB), path(per_site_varA), path(per_site_varB)
-
 
     output:
     tuple val(meta), path("*.pdf"), emit: pdf
@@ -26,7 +26,7 @@ process EPINANO_PLOTS {
 
     script:
 	"""
-	#epinano_scatterplot.R ${per_site_varA} ${sampleIDA} ${per_site_varB} ${sampleIDB} ${mode}
+	epinano_scatterplot.R ${per_site_varA} ${meta.id} ${per_site_varB} ${meta2.id} ${mode}
     """
 
 
