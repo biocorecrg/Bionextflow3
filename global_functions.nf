@@ -35,7 +35,7 @@ def notify_slack(text, hook) {
     def proc = cmd.execute()
     proc.waitFor()
 
-    log.info "Slack response: ${proc.text}"
+    if ("${proc.text}" != "") { log.info "Slack response: ${proc.text}" }
 
     myFile.delete()
 
