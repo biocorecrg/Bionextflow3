@@ -468,15 +468,14 @@ gene_expression_yaml <- function(norm_counts, genes, desc, intgroup = "condition
 genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors = c("black","#1C9BCD", "darkred","darkgreen", "#E69F00", "blue", "magenta"), condition="condition") {
 
 
-
   genes_desc$gene_name_norm <- normalize_gene_name(genes_desc[,2])
 
   genes_match <- genes_desc[genes_desc$gene_name_norm %in% genes, ]
 
   if (nrow(genes_match) < 1) {
-    print(paste0("Gene names: ",genes,"NOT found in gene_desc.txt"))}
+    warning(paste0("Gene names: ",genes,"NOT found in gene_desc.txt"))}
   else {
-  print(paste0("Gene name: ",genes_match$gene.name," found in gene_desc.txt"))
+    warning(paste0("Gene name: ",genes_match$gene.name," found in gene_desc.txt"))
 
   ## selecting vst counts for specific genes
   a <- norm_counts[rownames(norm_counts) %in% genes_match[[1]],]
@@ -507,6 +506,16 @@ genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors =
       values_to = "expression"
     )
 
+  ## Setting up frame for ggplot depending on the number of genes to plot
+
+  n_panels <- length(unique(df_long$gene))
+
+  nrow <- 2
+  ncol <- ceiling(n_panels / nrow)
+
+  panel_width  <- 3
+  panel_height <- 4.5
+
   ## Creating a plot for each gene, wir one boxplot for condition
   ggplot(df_long, aes(x = condition, y = expression, fill = condition)) +
     geom_boxplot(width = 0.3 ,alpha = 0.20) +
@@ -518,7 +527,13 @@ genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors =
                  width = 0.2) +
     geom_text_repel(
       aes(label = sample_short),
-      size = 2.5,
+      size = 2,
+      max.overlaps = 20,
+      box.padding = 0.3,
+      point.padding = 0.2,
+      segment.size = 0.2,
+      min.segment.length = 0,
+      force = 2,
       show.legend = FALSE
     ) +
     facet_wrap(~ gene, nrow = 2, scales = "free_y") +
@@ -530,12 +545,15 @@ genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors =
     theme_bw() +
     theme(
       strip.background = element_rect(fill = "grey90"),
-      strip.text = element_text(face = "bold")
-    )
-  ggsave(paste(title,"genes_boxplot.png",sep="_"), width = 600,
-         height =800 ,
-         units = "px",
-         dpi = 76)
+      strip.text = element_text(face = "bold"),
+      plot.margin = margin(10, 30, 10, 10)
+    ) +
+    coord_cartesian(clip = "off")
+  ggsave(paste(title,"genes_boxplot.png",sep="_"), 
+         width = 10,
+         height = 6,
+         units = "in",
+         dpi = 300)
   }
 }
 

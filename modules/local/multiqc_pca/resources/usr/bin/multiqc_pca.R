@@ -14,9 +14,10 @@ parser$add_argument("-type", "--Input_type", type="character", required="true", 
 parser$add_argument("-label", "--Add_labels", type="character", default="", help="Column to be used for labels")
 parser$add_argument("-dtrans", "--Desc_Tx", type="character", default="tx2gene.csv", help="Path to read tx2gene file (ONLY FOR SALMON) [default %(default)s]")
 parser$add_argument("-strand", "--Strand_id", type="integer", default=4, help="Strand to analyze, 2: unstranded, 3: forward, 4 reverse (ONLY FOR STAR) [default %(default)s]")
-parser$add_argument("-batch", "--add_batch", type="character", default="", help="Remove batch effect using the column batch in desc file: limma or combat")
+parser$add_argument("-batch", "--add_batch", action='store_true', help="Remove batch effect with Combat-seq using the column batch in desc file")
 parser$add_argument("-pcnum", "--Number_principal_components", type="integer", default=4, help="Number of principal components (one for each column) data to extract to the data table, [default %(default)s]")
 parser$add_argument("-genes", "--Gene_list", type="character", default="", help="Comma separated list of genes (max 10), for boxplot gene expression between conditions (e.g: -genes Slc26a4,Cd276,Cyth4)")
+parser$add_argument("-color", "--PCA_color",type="character", default="", help="Column in desc.txt to be used for coloring PCA plot")
 
 
 #Get command line options, if help option encountered - print help and exit:
@@ -53,6 +54,12 @@ boxplot_colors <- c("black","#1C9BCD", "darkred","darkgreen", "#E69F00", "blue",
 
 create_pca_data(vsd, condition, args$Number_principal_components, "PCA", pca_colors)
 
+if (args$PCA_color != "") {
+	color_condition <- args$PCA_color
+	prefix <- paste0("PCA_colored_by_", args$PCA_color)
+	create_pca_data(vsd, color_condition, args$Number_principal_components, prefix, pca_colors)
+}
+
 
 if (args$Desc_genes != "") {
     print("found desc gene file")
@@ -85,15 +92,16 @@ if (args$add_batch != "") {
         stop("ERROR DO NOT PUT THE BATCH AS CONTROLLING FACTOR!!!")
         
     }
-	if (args$add_batch == "limma"){
-		mat<-assay(vsd)
-		mm <- model.matrix(as.formula(args$Assay_field), colData(vsd))
-		mat <- limma::removeBatchEffect(mat, batch=vsd$batch, design=mm)
-		assay(vsd) <- mat
+	# if (args$add_batch == "limma"){
+	# 	mat<-assay(vsd)
+	# 	mm <- model.matrix(as.formula(args$Assay_field), colData(vsd))
+	# 	mat <- limma::removeBatchEffect(mat, batch=vsd$batch, design=mm)
+	# 	assay(vsd) <- mat
 
-		create_pca_data(vsd, condition, args$Number_principal_components, "batch_PCA", pca_colors)
+	# 	create_pca_data(vsd, condition, args$Number_principal_components, "batch_PCA", pca_colors)
 
-	} else if (args$add_batch == "combat") {
+	# } 
+	if (args$add_batch) {
 		# Raw counts
 		mat <- counts(dds)
 
