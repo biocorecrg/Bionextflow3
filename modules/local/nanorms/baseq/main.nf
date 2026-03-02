@@ -12,7 +12,7 @@ process NANORMS_BASEQ {
 
     output:
     tuple val(meta), path("*_baseQ.bed.gz"),         emit: bed
-    tuple val("${task.process}"), val("baseQ"), eval("/opt/app/src/bam2baseQ.py --version"), topic: versions, emit: versions_baseQ
+    tuple val("${task.process}"), val("nanorms"), eval("/opt/app/src/bam2baseQ.py --version"), topic: versions, emit: versions_baseQ
 
     when:
     task.ext.when == null || task.ext.when

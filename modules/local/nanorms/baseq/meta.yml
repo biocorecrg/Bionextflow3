@@ -1,10 +1,10 @@
 name: nanorms_baseq
-description: NanoRMS: predicting NANOpore Rna Modification Stoichiometry
+description: "NanoRMS: predicting NANOpore Rna Modification Stoichiometry"
 keywords:
   - baseq
   - RNA
 tools:
-  - nanorms:
+  - baseQ:
       description: |
         NanoRMS predicts modification stoichiometries by classifying reads into modified/unmodified, based on their per-read features (current intensity, dwell time and/or trace).
       documentation: https://github.com/novoalab/nanoRMS

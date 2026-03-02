@@ -11,8 +11,8 @@ process NANORMS_BAM2FEATUREKS {
     tuple val(meta2), path(alnfileB), path(alnindexB)
 
     output:
-    tuple val(meta), path("*_baseQ.bed.gz"),            emit: bed
-    tuple val("${task.process}"), val("bam2featureKS"), eval("/opt/app/src/bam2featureKS.py --version"), topic: versions, emit: versions_bam2featurehs
+    tuple val(meta), path("*.bed.gz"),            emit: bed
+    tuple val("${task.process}"), val("nanorms_bam2featureKS"), eval("/opt/app/src/bam2featureKS.py --version"), topic: versions, emit: versions_bam2featurehs
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,7 +22,7 @@ process NANORMS_BAM2FEATUREKS {
     def prefix = task.ext.prefix ?: "${meta.id}-vs-${meta2.id}"
     """
         /opt/app/src/bam2featureKS.py ${args}  -t ${task.cpus} -i ${alnfileA} ${alnfileB} -o ./${prefix}
+        for i in *.bed; do gzip \$i; done
     """
-
 
 }

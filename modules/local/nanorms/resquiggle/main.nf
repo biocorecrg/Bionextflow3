@@ -15,7 +15,7 @@ process NANORMS_RESQUIGGLE {
     tuple val(meta), path("resquiggle/*.csi"),             optional: true, emit: bam_index
     tuple val(meta), path("resquiggle/*.cram"),            optional: true, emit: res_cram
     tuple val(meta), path("resquiggle/*.cram.crai"),       optional: true, emit: cram_index
-    tuple val("${task.process}"), val("bam2featureKS"), eval("/opt/app/src/resquiggle.py --version"), topic: versions, emit: versions_bam2featureks
+    tuple val("${task.process}"), val("nanorms"), eval("/opt/app/src/resquiggle.py --version"), topic: versions, emit: versions_bam2featureks
 
     when:
     task.ext.when == null || task.ext.when

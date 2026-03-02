@@ -1,7 +1,7 @@
-name: nanorms_bam2feature
-description: NanoRMS: predicting NANOpore Rna Modification Stoichiometry
+name: nanorms_bam2featureks
+description: "NanoRMS: predicting NANOpore Rna Modification Stoichiometry"
 keywords:
-  - bam2feature
+  - bam2featureks
   - RNA
 tools:
   - nanorms:
@@ -11,6 +11,48 @@ tools:
       licence: ["GPL-2.0"]
       homepage: https://github.com/novoalab/nanoRMS
       doi: https://doi.org/10.1038/s41587-021-00915-6
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information for the first sample.
+          e.g. `[ id:'sample1' ]`
+    - alnfileA:
+        type: file
+        description: BAM alignment file for the first sample
+        pattern: "*.bam"
+    - alnindexA:
+        type: file
+        description: BAM index file for the first sample
+        pattern: "*.bai"
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing sample information for the second sample.
+          e.g. `[ id:'sample2' ]`
+    - alnfileB:
+        type: file
+        description: BAM alignment file for the second sample
+        pattern: "*.bam"
+    - alnindexB:
+        type: file
+        description: BAM index file for the second sample
+        pattern: "*.bai"
+
+output:
+  - bed:
+      - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.bed.gz":
+          type: file
+          description: Gzipped BED file with per-read features and KS test results
+          pattern: "*.bed.gz"
+  - versions:
+      - versions:
+          type: file
+          description: File containing software versions
 
 authors:
   - "@lucacozzuto"
