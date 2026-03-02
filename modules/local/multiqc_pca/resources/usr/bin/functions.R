@@ -513,8 +513,8 @@ genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors =
   nrow <- 2
   ncol <- ceiling(n_panels / nrow)
 
-  panel_width  <- 3
-  panel_height <- 4.5
+  panel_width  <- 2.2
+  panel_height <- 2
 
   ## Creating a plot for each gene, wir one boxplot for condition
   ggplot(df_long, aes(x = condition, y = expression, fill = condition)) +
@@ -536,7 +536,7 @@ genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors =
       force = 2,
       show.legend = FALSE
     ) +
-    facet_wrap(~ gene, nrow = 2, scales = "free_y") +
+    facet_wrap(~ gene, nrow = 2, scales = "free_y", labeller = label_wrap_gen(width = 25)) +
     labs(
       x = "Group",
       y = title,
@@ -545,19 +545,19 @@ genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors =
     theme_bw() +
     theme(
       strip.background = element_rect(fill = "grey90"),
-      strip.text = element_text(face = "bold"),
+      strip.text = element_text(face = "bold", size = 5),
       plot.margin = margin(10, 30, 10, 10)
     ) +
     coord_cartesian(clip = "off")
   ggsave(paste(title,"genes_boxplot.png",sep="_"), 
          width = 10,
-         height = 6,
+         height = 8,
          units = "in",
          dpi = 300)
   }
 }
 
-create_pca_data <- function(vsd, condition, pcnum, file_prefix, colors) {
+create_pca_data <- function(vsd, condition, pcnum, colors) {
 
 	p <- plotPCA_plus(vsd, intgroup=condition, returnData = TRUE, pcnum=pcnum)
 	pca_data <- p[["data"]]
@@ -576,9 +576,6 @@ create_pca_data <- function(vsd, condition, pcnum, file_prefix, colors) {
 	# Add a new column 'color' to pca_data
 	pca_data$color <- color_map[pca_data[[condition]]]
 
-	# Save PCA data and variance tables
-	write.table(pca_data, file=paste0(file_prefix,"_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
-	write.table(pca_variance, file=paste0(file_prefix,"_variance.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
 
 	return(list(data = pca_data, variance = pca_variance))
 }
