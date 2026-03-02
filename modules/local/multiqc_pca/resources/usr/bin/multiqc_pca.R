@@ -47,17 +47,24 @@ condition<-gsub("~","",args$Assay_field)
 print(args$Number_principal_components)
 
 
-pca_colors <- c("black","#1C9BCD","magenta","cyan","red","blue","darkred","#E69F00","#db1432","darkgreen","#14db1e","#db9c14","#3dbfac","#5c5952","#4f0e29")
+pca_colors <- c("black","#1C9BCD","magenta","#E69F00","cyan","red","#14db1e","#dad60e","blue","darkred","#09e0d5","darkgreen","#bf3dbf","#8b836e","#4f0e29")
 
 # Extended color palette for boxplots to support up to 50 groups
-boxplot_colors <- c("black","#1C9BCD", "darkred","darkgreen", "#E69F00", "blue", "magenta")
+boxplot_colors <- c("black","#1C9BCD","magenta","#E69F00","cyan","red","#14db1e","#dad60e","blue","darkred","#09e0d5","darkgreen","#bf3dbf","#8b836e","#4f0e29")
 
-create_pca_data(vsd, condition, args$Number_principal_components, "PCA", pca_colors)
+no_batch_pca <- create_pca_data(vsd, condition, args$Number_principal_components, pca_colors)
+
+	# Save PCA data and variance tables
+write.table(no_batch_pca$data, file=paste0("PCA_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
+write.table(no_batch_pca$variance, file=paste0("PCA_variance.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
+
+
 
 if (args$PCA_color != "") {
 	color_condition <- args$PCA_color
 	prefix <- paste0("PCA_colored_by_", args$PCA_color)
-	create_pca_data(vsd, color_condition, args$Number_principal_components, prefix, pca_colors)
+	no_batch_pca_color <- create_pca_data(vsd, color_condition, args$Number_principal_components, pca_colors)
+	write.table(no_batch_pca_color$data, file=paste0(prefix, "_PCA_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
 }
 
 
@@ -122,7 +129,9 @@ if (args$add_batch != "") {
 		se2 <- DESeq(dds)
 		vsd <- makeVST(se2, FALSE)
 
-		create_pca_data(vsd, condition, args$Number_principal_components, "batch_PCA", pca_colors)
+		batch_pca <- create_pca_data(vsd, condition, args$Number_principal_components, pca_colors)
+		write.table(batch_pca$data, file=paste0("batch_PCA_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
+		write.table(batch_pca$variance, file=paste0("batch_PCA_variance.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
 
 		##### Sample CLustering table
 
