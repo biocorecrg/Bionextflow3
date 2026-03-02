@@ -1,4 +1,4 @@
-process NANORMS_BASEQ {
+process NANORMS_BAM2FEATUREKS {
     tag "$meta.id vs $meta2.id"
     label 'process_middle'
 
@@ -11,8 +11,8 @@ process NANORMS_BASEQ {
     tuple val(meta2), path(alnfileB), path(alnindexB)
 
     output:
-    tuple val(meta), path("*_baseQ.bed.gz"),         emit: bed
-    tuple val("${task.process}"), val("baseQ"), eval("/opt/app/src/bam2baseQ.py --version"), topic: versions, emit: versions_baseQ
+    tuple val(meta), path("*_baseQ.bed.gz"),            emit: bed
+    tuple val("${task.process}"), val("bam2featureKS"), eval("/opt/app/src/bam2featureKS.py --version"), topic: versions, emit: versions_bam2featurehs
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,8 +21,8 @@ process NANORMS_BASEQ {
     def args   = task.ext.args   ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}-vs-${meta2.id}"
     """
-      	/opt/app/src/bam2baseQ.py ${args} -i ${alnfileA} ${alnfileB} -t ${task.cpus} | gzip -c > ${prefix}_baseQ.bed.gz
-   """
+        /opt/app/src/bam2featureKS.py ${args}  -t ${task.cpus} -i ${alnfileA} ${alnfileB} -o ./${prefix}
+    """
 
 
 }
