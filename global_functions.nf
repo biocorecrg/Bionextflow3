@@ -76,7 +76,7 @@ def update_lims_status(user, apikey, lims_base, pipe_id) {
     //myFile.delete()
 }
 
-// end of pipeline
+// end of pipeline. If the variable hook is empty search for ENV variable HOOK
 def end_messaged(hook) {
     def text = final_message(workflow.manifest.name)
     println text
