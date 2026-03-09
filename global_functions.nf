@@ -87,7 +87,7 @@ def end_messaged(hook) {
 }
 
 def make_yaml_methods(mymap, toplevel, append=false) {
-    def myFile = file('methods.yaml')
+    def myFile = file("${workDir}/methods.yaml")
     def yaml_text = "${toplevel}:\n" + mymap.collect { k,v -> "  ${k}: \"${v}\"" }.join("\n")
 
     // Write or append safely
@@ -101,7 +101,7 @@ def make_yaml_methods(mymap, toplevel, append=false) {
 
 def add_report_header_info(multiqc_file, values) {
     
-    def newFile = file('new_multiqc_config.yaml')
+    def newFile = file("${workDir}/new_multiqc_config.yaml")
     
     def yamlContent = "report_header_info:\n"
     values.each { k, v ->
