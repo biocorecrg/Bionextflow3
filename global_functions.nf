@@ -49,8 +49,7 @@ def upload_to_lims(text) {
 }
 
 def update_lims_status(user, apikey, lims_base, pipe_id) {
-    def mystatus = success ? 'SU' : 'FA'
-    //def mystatus = 'SU'
+    def mystatus = workflow.success ? 'SU' : 'FA'
     def myFile = File.createTempFile('notify', '.json')
     myFile.text = """{"status": "${mystatus}"}"""
 
