@@ -2,8 +2,8 @@ process LLAMA_RUN_PYTHON {
     tag "$meta.id"
     label 'process_gpu'
 
-    container "docker.io/biocorecrg/llama:0.1"
-    //container "community.wave.seqera.io/library/llama-cpp-python_cuda:e081d1272ef7c140"
+    //container "docker.io/biocorecrg/llama:0.1"
+    container "quay.io/nf-core/llama-cpp-python:0.1.9"
     //container "ghcr.io/abetlen/llama-cpp-python:latest"
 
     input:
