@@ -56,7 +56,7 @@ def main():
     parser = argparse.ArgumentParser(description="Submit a process with model.")
     parser.add_argument("-s", "--messages", required=True, help="Plain text prompt file")
     parser.add_argument("-m", "--model", required=True, help="Model used")
-    parser.add_argument("-t", "--temperature", type=float, default=0.2, help="Temperature")
+    parser.add_argument("-t", "--temperature", type=float, default=0.9, help="Temperature")
     parser.add_argument("-o", "--output", default="output.txt", help="Output text")
     parser.add_argument("-c", "--context", type=int, default=4096, help="Context size")
     parser.add_argument("--chat_format", default="chatml", help="Chat format (chatml, llama-2, llama-3, gemma...)")

@@ -3,6 +3,7 @@ process LLAMA_RUN_PYTHON {
     label 'process_gpu'
 
     container "docker.io/biocorecrg/llama:0.1"
+    //container "community.wave.seqera.io/library/llama-cpp-python_cuda:e081d1272ef7c140"
     //container "ghcr.io/abetlen/llama-cpp-python:latest"
 
     input:
@@ -10,7 +11,7 @@ process LLAMA_RUN_PYTHON {
     path(model)
 
     output:
-    tuple val(meta), path("output.txt"), emit: output
+    tuple val(meta), path("output.md"), emit: output
     //tuple val("${task.process}"), val("llama"), eval("llama: \$(python3 -c 'import llama_cpp; print(llama_cpp.__version__)')"), topic: versions, emit: versions
 
 
@@ -24,8 +25,8 @@ process LLAMA_RUN_PYTHON {
     llamacpp-python.py \
         --model ${model} \
         --messages ${prompt_file} \
-        --output output.txt -g -1 \
-        ${args}
+        --output output.md \
+        ${args} 
     """
 
     stub:
