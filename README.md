@@ -1,6 +1,6 @@
 <img align="right" href="https://biocore.crg.eu/" src="https://github.com/CRG-CNAG/BioCoreMiscOpen/blob/master/logo/biocore-logo_small.png" />
 
-# <img src="bionextflow3.png" width="200"> BioNextflow3
+<img src="bionextflow3.png" width="200">
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6394333.svg)](https://doi.org/10.5281/zenodo.6394333)
 [![Nextflow version](https://img.shields.io/badge/Nextflow-21.04.1-brightgreen)](https://www.nextflow.io/)
