@@ -85,13 +85,10 @@ def end_messaged(hook) {
 
 }
 
-def make_yaml_methods(mytext="", mymap, toplevel) {
-    if (mytext != "") {
-        mytext = mytext + "\n"
-    }
+def make_yaml_methods(mymap, toplevel) {
     //def myFile = file("${workDir}/methods.yaml")
     def yaml_text = "${toplevel}:\n" + mymap.collect { k,v -> "  ${k}: \"${v}\"" }.join("\n")
-    return(mytext + yaml_text)
+    return(yaml_text)
 }
 
 def add_report_header_info(multiqc_file, values) {
