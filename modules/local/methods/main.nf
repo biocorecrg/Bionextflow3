@@ -17,6 +17,6 @@ process METHODS_SECTION {
     """
     get_doi_from_meta.py -p ./
     addCitationFromYaml.js --input dois.yml --output methods_data.yml 
-    pipeline_methods.py -d methods_data.yml -m methods.yaml -t template.yml
+    pipeline_methods.py -d methods_data.yml -m ${params_file} -t template.yml
  """
 }
