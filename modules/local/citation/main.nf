@@ -9,7 +9,7 @@ process CITATION_JS {
     tuple val(meta), val(doi), val(format), val(citation_template)
 
     output:
-    tuple val(meta), val(output)                    , emit: output
+    tuple val(meta), val("output.txt")              , emit: output
     path  "versions.yml"                            , emit: versions
 
     when:

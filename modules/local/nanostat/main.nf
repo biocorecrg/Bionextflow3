@@ -19,8 +19,6 @@ process NANOSTAT {
 
     script:
     def args = task.ext.args ?: ''
-   
-     script:
     def format_flag = input_file.name.endsWith('.cram') ? '--cram' : '--bam'
 
     """
