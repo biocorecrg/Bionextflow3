@@ -1,0 +1,26 @@
+name: winnowmap_meryl
+description: Winnowmap is a long-read mapping algorithm optimized for mapping ONT and PacBio reads to repetitive reference sequences
+keywords:
+  - align
+  - fasta
+  - fastq
+  - genome
+  - reference
+tools:
+  - minimap2:
+      description: |
+        Winnowmap is a long-read mapping algorithm optimized for mapping ONT and PacBio reads to repetitive reference sequences.
+      homepage: https://github.com/marbl/Winnowmap
+      documentation: https://github.com/marbl/Winnowmap
+      licence: ["MIT"]
+      identifier: ""
+      doi: 10.1093/bioinformatics/btaa435
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process name
+authors:
+  - "@lucacozzuto"
+maintainers:
+  - "@lucacozzuto"
