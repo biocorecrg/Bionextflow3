@@ -42,7 +42,7 @@ def notify_slack(text, hook) {
 }
 
 // upload to custom LIMS
-def upload_to_lims(text) {
+def upload_to_lims() {
     if (params.containsKey('lims_api_base_url') && params.lims_api_base_url) {
     	update_lims_status(params.lims_username, params.lims_api_key, params.lims_api_base_url, params.lims_pipeline_execution_id)
     }
@@ -79,8 +79,8 @@ def update_lims_status(user, apikey, lims_base, pipe_id) {
 def end_messaged(hook) {
     def text = final_message(workflow.manifest.name)
     println text
-    slackhook = hook ?: System.getenv('HOOK')
-    upload_to_lims(text)
+    def slackhook = hook ?: System.getenv('HOOK')
+    upload_to_lims()
     (slackhook && slackhook != 'skip') ? notify_slack(text, slackhook) : null
 
 }
@@ -137,7 +137,7 @@ def revCompDNA(seq) {
 }
 
 def trim_NF_date(nfdate){
-    newdate = nfdate.substring(0, nfdate.indexOf(".")).replaceAll("T", " ")
+    def newdate = nfdate.substring(0, nfdate.indexOf(".")).replaceAll("T", " ")
     return(newdate)
 }
 
@@ -212,7 +212,8 @@ def zcatOrCat(filename) {
 // suitable for nf-core modules
 def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
 	def myseqs = channel.of()
-
+    def mypars = channel.of()
+    
 	if (input_string.contains("{") && input_string.contains(",") && input_string.contains("}")) {
     	  myseqs = channel.fromFilePairs( input_string, checkIfExists: true, type: mytype ) 
     	  .map {[ [id: it[0], single_end:false ],  it[1] ] }
@@ -229,7 +230,7 @@ def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
 
 // evaluate input string for making a file path or an empty map
 def fromParToValueFileChannel(input_string, mytype = "file") {
-	myfile = []
+	def myfile = []
 	if (input_string) {
 		myfile = channel.fromPath( input_string,  checkIfExists:true, type: mytype).first()
 	}
@@ -238,13 +239,13 @@ def fromParToValueFileChannel(input_string, mytype = "file") {
 
 // from nf-core standard channel to value channel 
 def fromNFcoreToValueChannel(input_channel) {
-     val_channel = input_channel.map{it[1]}.first()
+     def val_channel = input_channel.map{it[1]}.first()
      return (val_channel)
 }
 
 // evaluate input string for making a file path or an empty map
 def addPrefixToFiles(input_nf_ch, prefix) {
-	output_nf_ch = []
+	def output_nf_ch = []
 	output_nf_ch = input_nf_ch.map{ 
 		meta, files ->  
     	[ [id: "${meta.id}${prefix}", single_end: meta.single_end], files ]  
@@ -268,7 +269,7 @@ def metaToCanonical(input_nf_ch, flat=false) {
 }
 
 def flattenToTuple(input_ch) {
-	tuples = input_ch.map{ 
+	def tuples = input_ch.map{ 
 		[ it[0], it[1..-1]  ]
 	}
 	return(tuples)
@@ -277,7 +278,7 @@ def flattenToTuple(input_ch) {
 
 // remove the metamap from a channel 
 def canonicalToMeta(input_ch) {
-	nfcore_ch = input_ch.map { id, files ->
+	def nfcore_ch = input_ch.map { id, files ->
 		if( files.size() >= 2 ) {
 			[ [ id: id, single_end : false], files ]
 
@@ -290,17 +291,17 @@ def canonicalToMeta(input_ch) {
 
 def subsetReads (reads, subset_num) {
 
-    reads_types = reads.branch { meta, files ->
+    def reads_types = reads.branch { meta, files ->
         pe: meta.single_end == false
         se: meta.single_end == true
     }
 
-    flat_reads_pe = metaToCanonical(reads_types.pe, true)
-    flat_reads_se = metaToCanonical(reads_types.se, true)
-    splitted_pe = flat_reads_pe.splitFastq( by: subset_num, decompress:true, file:true, limit:subset_num, pe: true )
-    splitted_se = flat_reads_se.splitFastq( by: subset_num, decompress:true, file:true, limit:subset_num )
-	splitted = splitted_pe.mix(splitted_se)
-	tuples = flattenToTuple(splitted)
+    def flat_reads_pe = metaToCanonical(reads_types.pe, true)
+    def flat_reads_se = metaToCanonical(reads_types.se, true)
+    def splitted_pe = flat_reads_pe.splitFastq( by: subset_num, decompress:true, file:true, limit:subset_num, pe: true )
+    def splitted_se = flat_reads_se.splitFastq( by: subset_num, decompress:true, file:true, limit:subset_num )
+	def splitted = splitted_pe.mix(splitted_se)
+	def tuples = flattenToTuple(splitted)
 	
 	return (canonicalToMeta(tuples))
 
