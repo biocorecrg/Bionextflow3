@@ -31,9 +31,6 @@ process NANOQ_STATS {
     stub:
     prefix = task.ext.prefix ?: "${meta.id}_filtered"
     """
-    echo "" | gzip > ${prefix}.${output_format}
     touch ${prefix}.stats
-
-
     """
 }

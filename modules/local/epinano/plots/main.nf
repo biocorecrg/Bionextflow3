@@ -24,7 +24,6 @@ process EPINANO_PLOTS {
     def args   = task.ext.args   ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
-    script:
 	"""
 	epinano_scatterplot.R ${per_site_varA} ${meta.id} ${per_site_varB} ${meta2.id} ${mode}
     """

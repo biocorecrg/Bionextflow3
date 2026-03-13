@@ -14,7 +14,7 @@ process JOIN_BAM_STATS {
     output:
     path("alnQC_mqc.txt"), emit: join_stats
 
-    
+    script:
     """
     echo '# id: alnQC
 # plot_type: \'table\'

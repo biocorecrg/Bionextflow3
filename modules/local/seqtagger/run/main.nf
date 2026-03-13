@@ -25,7 +25,7 @@ process SEQTAGGER {
     """
     
         mkdir tmp
-        export MPLCONFIGDIR=$PWD/tmp
+        export MPLCONFIGDIR=\$PWD/tmp
     	run ${args} -r -i ./ -o temp_output -t ${task.cpus}
     	mv temp_output/..demux.tsv.gz ${prefix}_demux.tsv.gz
     	mv temp_output/..demux.tsv.gz.boxplot.pdf ${prefix}.boxplot.pdf
