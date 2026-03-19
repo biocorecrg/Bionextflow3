@@ -32,6 +32,10 @@ reporting_info  = mymethods.get('reporting', {})
 
 citations_info  = {}
 versions_info   = {}
+# Safety check - ensure reporting_info is a dict
+if reporting_info is None:
+    reporting_info = {}
+
 for tool in all_tools_info.keys():
   versions_info[tool] =  all_tools_info[tool]["version"]
   if ( "citation" in all_tools_info[tool]):
