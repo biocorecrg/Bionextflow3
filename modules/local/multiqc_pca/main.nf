@@ -1,6 +1,6 @@
 process MULTIQC_PCA {
     
-    container 'fabianandrade/deseq2:2026_1'
+    container 'docker.io/fabianandrade/deseq2:2026_1'
 
     input:
     tuple val(meta), path(input_files)
