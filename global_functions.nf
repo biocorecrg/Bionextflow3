@@ -1,50 +1,75 @@
-include { softwareVersionsToYAML } from "../subworkflows/nf-core/utils_nfcore_pipeline/"
+include { processVersionsFromYAML } from "../subworkflows/nf-core/utils_nfcore_pipeline/"
+include { workflowVersionToYAML   } from "../subworkflows/nf-core/utils_nfcore_pipeline/"
 
 // colors and other
 def colorCodes() {
     def colorcodes = [:]
     // font
-    colorcodes['bold']     = "\033[1m"
-    colorcodes['reset']    = "\033[0m"
-    colorcodes['line']     = "\033[0m"
+    colorcodes['bold'] = "\033[1m"
+    colorcodes['reset'] = "\033[0m"
+    colorcodes['line'] = "\033[0m"
 
     // colors
-    colorcodes['yellow']     = "\033[0;33m"
-    colorcodes['black']      = "\033[0;30m"
-    colorcodes['red']        = "\033[0;31m"
-    colorcodes['green']      = "\033[0;32m"
-    colorcodes['green']      = "\033[0;32m"
-    return(colorcodes)
+    colorcodes['yellow'] = "\033[0;33m"
+    colorcodes['black'] = "\033[0;30m"
+    colorcodes['red'] = "\033[0;31m"
+    colorcodes['green'] = "\033[0;32m"
+    colorcodes['green'] = "\033[0;32m"
+    return (colorcodes)
 }
 
 // notify
 def notify_slack(text, hook) {
     def myFile = File.createTempFile('notify', '.json')
     myFile << '{"text": "'
-    myFile << text.replace("\n",'\\n')
+    myFile << text.replace("\n", '\\n')
     myFile << '"}'
     def cmd = [
         "curl",
         "-s",
-        "-X", "POST",
-        "-H", "Content-type: application/json",
-        "-d", "@${myFile.absolutePath}",
-        hook
+        "-X",
+        "POST",
+        "-H",
+        "Content-type: application/json",
+        "-d",
+        "@${myFile.absolutePath}",
+        hook,
     ]
 
     def proc = cmd.execute()
     proc.waitFor()
 
-    if ("${proc.text}" != "") { log.info "Slack response: ${proc.text}" }
+    if ("${proc.text}" != "") {
+        log.info("Slack response: ${proc.text}")
+    }
 
     myFile.delete()
+}
 
+//
+// Get channel of software versions used in pipeline in YAML format
+//
+def softwareVersionsToYAML(ch_versions) {
+    return ch_versions
+        .unique()
+        .map { version ->
+            if (version instanceof List) {
+                def yaml = new org.yaml.snakeyaml.Yaml()
+                def process = version[0].tokenize(':')[-1]
+                def tool = version[1]
+                def v = version[2]
+                return yaml.dumpAsMap([(process): [(tool): v]]).trim()
+            }
+            return processVersionsFromYAML(version)
+        }
+        .unique()
+        .mix(channel.of(workflowVersionToYAML()))
 }
 
 // upload to custom LIMS
 def upload_to_lims() {
     if (params.containsKey('lims_api_base_url') && params.lims_api_base_url) {
-    	update_lims_status(params.lims_username, params.lims_api_key, params.lims_api_base_url, params.lims_pipeline_execution_id)
+        update_lims_status(params.lims_username, params.lims_api_key, params.lims_api_base_url, params.lims_pipeline_execution_id)
     }
 }
 
@@ -57,44 +82,45 @@ def update_lims_status(user, apikey, lims_base, pipe_id) {
         "curl",
         "-s",
         "-k",
-        "-X", "PATCH",
-        "-H", "Content-Type: application/json",
-        "-H", "Authorization: ApiKey ${user}:${apikey}",
-        "-d", "@${myFile.absolutePath}",
-        "${lims_base}/${pipe_id}"
+        "-X",
+        "PATCH",
+        "-H",
+        "Content-Type: application/json",
+        "-H",
+        "Authorization: ApiKey ${user}:${apikey}",
+        "-d",
+        "@${myFile.absolutePath}",
+        "${lims_base}/${pipe_id}",
     ]
 
 
     def proc = cmd.execute()
     proc.waitFor()
 
-    log.info "LIMS response: ${proc.text}"
-    log.info "Payload file: ${myFile.absolutePath}"
-    log.info "${cmd}.join(' ')"
-
-    //myFile.delete()
+    log.info("LIMS response: ${proc.text}")
+    log.info("Payload file: ${myFile.absolutePath}")
+    log.info("${cmd}.join(' ')")
 }
 
 // end of pipeline. If the variable hook is empty search for ENV variable HOOK
 def end_messaged(hook) {
     def text = final_message(workflow.manifest.name)
-    println text
+    println(text)
     def slackhook = hook ?: System.getenv('HOOK')
     upload_to_lims()
-    (slackhook && slackhook != 'skip') ? notify_slack(text, slackhook) : null
-
+    slackhook && slackhook != 'skip' ? notify_slack(text, slackhook) : null
 }
 
 def make_yaml_methods(mymap, toplevel) {
     //def myFile = file("${workDir}/methods.yaml")
-    def yaml_text = "${toplevel}:\n" + mymap.collect { k,v -> "  ${k}: \"${v}\"" }.join("\n")
-    return(yaml_text)
+    def yaml_text = "${toplevel}:\n" + mymap.collect { k, v -> "  ${k}: \"${v}\"" }.join("\n")
+    return (yaml_text)
 }
 
 def add_report_header_info(multiqc_file, values) {
-    
+
     def newFile = file("${workDir}/new_multiqc_config.yaml")
-    
+
     def yamlContent = "report_header_info:\n"
     values.each { k, v ->
         yamlContent += "  - ${k}: \"${v}\"\n"
@@ -106,7 +132,7 @@ def add_report_header_info(multiqc_file, values) {
     // write file
     newFile.text = yamlContent
 
-    return(channel.fromPath(newFile).first())
+    return (channel.fromPath(newFile).first())
 }
 
 
@@ -118,12 +144,11 @@ def emptyMeta() {
 // make Software Version YAML
 
 def makeSoftwareVersionYamlFile(ch_versions) {
-        def ch_collated_versions = softwareVersionsToYAML(ch_versions)
-        .collectFile(
-            name: 'nf_core_'  + 'pipeline_software_' +  'mqc_'  + 'versions.yml',
-            sort: true,
-            newLine: true
-         )
+    def ch_collated_versions = softwareVersionsToYAML(ch_versions).collectFile(
+        name: 'nf_core_' + 'pipeline_software_' + 'mqc_' + 'versions.yml',
+        sort: true,
+        newLine: true,
+    )
 
     return ch_collated_versions
 }
@@ -131,69 +156,69 @@ def makeSoftwareVersionYamlFile(ch_versions) {
 
 // reverse complement DNA sequence
 def revCompDNA(seq) {
-	def newseq = seq.tr("ATGCatgc","TACGtacg").reverse()
-	return(newseq)
-
+    def newseq = seq.tr("ATGCatgc", "TACGtacg").reverse()
+    return (newseq)
 }
 
-def trim_NF_date(nfdate){
+def trim_NF_date(nfdate) {
     def newdate = nfdate.substring(0, nfdate.indexOf(".")).replaceAll("T", " ")
-    return(newdate)
+    return (newdate)
 }
 
-def final_message(title="") {
-	def ostart = "${workflow.start}"
-	def ostop = "${workflow.complete}"
-	def start = trim_NF_date(ostart)
-        def stop = trim_NF_date(ostop)
-        def error = ""
-        if (workflow.errorReport) {
-            error = "\n```${workflow.errorReport}```\n"
-        }
+def final_message(title = "") {
+    def ostart = "${workflow.start}"
+    def ostop = "${workflow.complete}"
+    def start = trim_NF_date(ostart)
+    def stop = trim_NF_date(ostop)
+    def error = ""
+    if (workflow.errorReport) {
+        error = "\n```${workflow.errorReport}```\n"
+    }
 
-	def message =  "-"*51 + "\n"
-	message = message + "*Pipeline ${title} completed!*".center(51) + "\n"
-        message = message + "-"*51 + "\n"
+    def message = "-" * 51 + "\n"
+    message = message + "*Pipeline ${title} completed!*".center(51) + "\n"
+    message = message + "-" * 51 + "\n"
 
-	message = message + "- Launched by `$workflow.userName`" + "\n"
-	message = message + "- Started at $start" + "\n"
-    	message = message + "- Finished at $stop" + "\n"
-    	message = message + "- Time elapsed: $workflow.duration" + "\n"
-    	message = message + "- Execution status: ${ workflow.success ? 'OK' : 'failed' }" + "\n"
-    	message = message + "```$workflow.commandLine```"+ "\n"
-    	message = message + error + "-"*51 + "\n"
-return (message)
-
+    message = message + "- Launched by `${workflow.userName}`" + "\n"
+    message = message + "- Started at ${start}" + "\n"
+    message = message + "- Finished at ${stop}" + "\n"
+    message = message + "- Time elapsed: ${workflow.duration}" + "\n"
+    message = message + "- Execution status: ${workflow.success ? 'OK' : 'failed'}" + "\n"
+    message = message + "```${workflow.commandLine}```" + "\n"
+    message = message + error + "-" * 51 + "\n"
+    return (message)
 }
 
 // read a fasta file
 def readFasta(fastapath) {
-	def fastaMap = [:]
-	def currentId = null
-	def currentSeq = ""
+    def fastaMap = [:]
+    def currentId = null
+    def currentSeq = ""
 
-	file(fastapath).readLines()
-    .each {     
-		if (it.startsWith(">")) {
-			if (currentId) {
-				fastaMap[currentId] = currentSeq
-			}
-			currentId = it.substring(1).trim()
-			currentSeq = ""
-		} else {
-        	currentSeq = currentSeq + it.trim()
-    	}
-	}
-	fastaMap[currentId] = currentSeq
-		
-	return(fastaMap)
+    file(fastapath)
+        .readLines()
+        .each {
+            if (it.startsWith(">")) {
+                if (currentId) {
+                    fastaMap[currentId] = currentSeq
+                }
+                currentId = it.substring(1).trim()
+                currentSeq = ""
+            }
+            else {
+                currentSeq = currentSeq + it.trim()
+            }
+        }
+    fastaMap[currentId] = currentSeq
+
+    return (fastaMap)
 }
 
 // make named pipe
 def unzipNamedPipe(filename) {
     def cmd = filename.toString()
     if (cmd[-3..-1] == ".gz") {
-    	cmd = "<(zcat ${filename})"
+        cmd = "<(zcat ${filename})"
     }
     return cmd
 }
@@ -202,7 +227,7 @@ def zcatOrCat(filename) {
     def fname = filename.toString()
     def cmd = "cat ${filename}"
     if (fname[-3..-1] == ".gz") {
-    	cmd = "zcat ${filename}"
+        cmd = "zcat ${filename}"
     }
     return cmd
 }
@@ -211,85 +236,87 @@ def zcatOrCat(filename) {
 // evaluate input string for making SE or PE read channel with meta info
 // suitable for nf-core modules
 def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
-	def myseqs = channel.of()
+    def myseqs = channel.of()
     def mypars = channel.of()
-    
-	if (input_string.contains("{") && input_string.contains(",") && input_string.contains("}")) {
-    	  myseqs = channel.fromFilePairs( input_string, checkIfExists: true, type: mytype ) 
-    	  .map {[ [id: it[0], single_end:false ],  it[1] ] }
-	} else {
-          mypars = channel.fromFilePairs( input_string, size: 1, checkIfExists: true, type: mytype)
-	  if (parseid) {
-             myseqs = mypars.map {[ [id: it[1][0].name, single_end: true], it[1] ] }
-	  } else {
-     	     myseqs = mypars.map {[ [id: it[0], single_end:true],  it[1] ] }
-	  }
+
+    if (input_string.contains("{") && input_string.contains(",") && input_string.contains("}")) {
+        myseqs = channel.fromFilePairs(input_string, checkIfExists: true, type: mytype)
+            .map { [[id: it[0], single_end: false], it[1]] }
+    }
+    else {
+        mypars = channel.fromFilePairs(input_string, size: 1, checkIfExists: true, type: mytype)
+        if (parseid) {
+            myseqs = mypars.map { [[id: it[1][0].name, single_end: true], it[1]] }
+        }
+        else {
+            myseqs = mypars.map { [[id: it[0], single_end: true], it[1]] }
+        }
     }
     return (myseqs)
 }
 
 // evaluate input string for making a file path or an empty map
 def fromParToValueFileChannel(input_string, mytype = "file") {
-	def myfile = []
-	if (input_string) {
-		myfile = channel.fromPath( input_string,  checkIfExists:true, type: mytype).first()
-	}
+    def myfile = []
+    if (input_string) {
+        myfile = channel.fromPath(input_string, checkIfExists: true, type: mytype).first()
+    }
     return (myfile)
 }
 
-// from nf-core standard channel to value channel 
+// from nf-core standard channel to value channel
 def fromNFcoreToValueChannel(input_channel) {
-     def val_channel = input_channel.map{it[1]}.first()
-     return (val_channel)
+    def val_channel = input_channel.map { it[1] }.first()
+    return (val_channel)
 }
 
 // evaluate input string for making a file path or an empty map
 def addPrefixToFiles(input_nf_ch, prefix) {
-	def output_nf_ch = []
-	output_nf_ch = input_nf_ch.map{ 
-		meta, files ->  
-    	[ [id: "${meta.id}${prefix}", single_end: meta.single_end], files ]  
-	}
+    def output_nf_ch = []
+    output_nf_ch = input_nf_ch.map { meta, files ->
+        [[id: "${meta.id}${prefix}", single_end: meta.single_end], files]
+    }
     return (output_nf_ch)
 }
 
-// remove the metamap from a channel 
-def metaToCanonical(input_nf_ch, flat=false) {
+// remove the metamap from a channel
+def metaToCanonical(input_nf_ch, flat = false) {
     input_nf_ch.map { meta, files ->
         def result
         if (flat) {
             // produce [id, file1, file2, ...]
-            result = [ meta.id.toString() ] + files.flatten()
-        } else {
-            // produce [id, [file1, file2, ...]]
-            result = [ meta.id.toString(), files.flatten() ]
+            result = [meta.id.toString()] + files.flatten()
         }
-        return result  // Ensure it's a tuple
+        else {
+            // produce [id, [file1, file2, ...]]
+            result = [meta.id.toString(), files.flatten()]
+        }
+        return result
     }
 }
 
 def flattenToTuple(input_ch) {
-	def tuples = input_ch.map{ 
-		[ it[0], it[1..-1]  ]
-	}
-	return(tuples)
+    def tuples = input_ch.map {
+        [it[0], it[1..-1]]
+    }
+    return (tuples)
 }
 
 
-// remove the metamap from a channel 
+// remove the metamap from a channel
 def canonicalToMeta(input_ch) {
-	def nfcore_ch = input_ch.map { id, files ->
-		if( files.size() >= 2 ) {
-			[ [ id: id, single_end : false], files ]
-
-		} else {
-			[ [ id: id, single_end : true], files ]
-		}
-	}
-   return (nfcore_ch)
+    def nfcore_ch = input_ch.map { id, files ->
+        if (files.size() >= 2) {
+            [[id: id, single_end: false], files]
+        }
+        else {
+            [[id: id, single_end: true], files]
+        }
+    }
+    return (nfcore_ch)
 }
 
-def subsetReads (reads, subset_num) {
+def subsetReads(reads, subset_num) {
 
     def reads_types = reads.branch { meta, files ->
         pe: meta.single_end == false
@@ -298,14 +325,10 @@ def subsetReads (reads, subset_num) {
 
     def flat_reads_pe = metaToCanonical(reads_types.pe, true)
     def flat_reads_se = metaToCanonical(reads_types.se, true)
-    def splitted_pe = flat_reads_pe.splitFastq( by: subset_num, decompress:true, file:true, limit:subset_num, pe: true )
-    def splitted_se = flat_reads_se.splitFastq( by: subset_num, decompress:true, file:true, limit:subset_num )
-	def splitted = splitted_pe.mix(splitted_se)
-	def tuples = flattenToTuple(splitted)
-	
-	return (canonicalToMeta(tuples))
+    def splitted_pe = flat_reads_pe.splitFastq(by: subset_num, decompress: true, file: true, limit: subset_num, pe: true)
+    def splitted_se = flat_reads_se.splitFastq(by: subset_num, decompress: true, file: true, limit: subset_num)
+    def splitted = splitted_pe.mix(splitted_se)
+    def tuples = flattenToTuple(splitted)
 
+    return (canonicalToMeta(tuples))
 }
-
-
-

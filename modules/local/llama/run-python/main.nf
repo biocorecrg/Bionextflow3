@@ -1,19 +1,13 @@
 process LLAMA_RUN_PYTHON {
-    tag "$meta.id"
+    tag "${meta.id}"
     label 'process_gpu'
 
     //container "docker.io/biocorecrg/llama:0.1"
     container "quay.io/nf-core/llama-cpp-python:0.1.9"
-    //container "ghcr.io/abetlen/llama-cpp-python:latest"
 
     input:
-    tuple val(meta), path(prompt_file)
-    path(model)
-
-    output:
-    tuple val(meta), path("output.md"), emit: output
-    //tuple val("${task.process}"), val("llama"), eval("llama: \$(python3 -c 'import llama_cpp; print(llama_cpp.__version__)')"), topic: versions, emit: versions
-
+    tuple val(meta), path(system), path(prompt_file)
+    path model
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,9 +18,10 @@ process LLAMA_RUN_PYTHON {
     """
     llamacpp-python.py \
         --model ${model} \
+        --system_prompt ${system} \
         --messages ${prompt_file} \
         --output output.md \
-        ${args} 
+        ${args}
     """
 
     stub:
@@ -34,4 +29,7 @@ process LLAMA_RUN_PYTHON {
     """
     touch output.txt
     """
+
+    output:
+    tuple val(meta), path("output.md"), emit: output
 }

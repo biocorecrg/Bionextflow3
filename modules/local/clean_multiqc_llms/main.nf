@@ -4,16 +4,16 @@ process CLEAN_LLMS_PROMPT {
 
     label 'process_single'
 
-
     input:
     tuple val(meta), path(llms_file)
-    
-    output:
-    tuple val(meta), path("llms-full-cleaned.txt")
-    
+
     script:
     """
-    head -n 13 ${llms_file} > llms-full-cleaned.txt
-    tail -n +35 ${llms_file} >> llms-full-cleaned.txt
+    head -n 14 ${llms_file} > llms.system.txt
+    tail -n +35 ${llms_file} | grep -v "mqc-custom-content-image" >> llms-full-cleaned.txt
     """
+
+    output:
+    tuple val(meta), path("llms-full-cleaned.txt"), emit: clean_llms
+    tuple val(meta), path("llms.system.txt"), optional: true, emit: system_propmt
 }
