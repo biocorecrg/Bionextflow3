@@ -20,16 +20,20 @@ process LLAMA_RUN_PYTHON {
         --model ${model} \
         --system_prompt ${system} \
         --messages ${prompt_file} \
-        --output output.md \
+        --output ${prefix}.md \
+        --html_output ${prefix}_mqc.html \
+        --sample_name "${prefix}" \
         ${args}
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch output.txt
+    touch ${prefix}.md
+    touch ${prefix}_mqc.html
     """
 
     output:
-    tuple val(meta), path("output.md"), emit: output
+    tuple val(meta), path("${prefix}.md"),       emit: output
+    tuple val(meta), path("${prefix}_mqc.html"), emit: html
 }
