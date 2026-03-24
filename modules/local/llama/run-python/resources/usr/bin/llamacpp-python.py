@@ -147,22 +147,48 @@ def process_with_llm(llm, prompt, temperature, max_tokens, system_prompt):
         return json.dumps(response, indent=2)
 
 
-def _infer_status_color(text):
-    """Return a CSS color string based on keywords found in the LLM reply."""
-    lowered = text.lower()
-    # Red: explicit failure/critical keywords
-    if any(k in lowered for k in ("fail", "critical", "error", "poor", "severe", "corrupt")):
-        return "#e74c3c", "FAIL"
-    # Yellow: warning/moderate keywords
-    if any(k in lowered for k in ("warn", "caution", "issue", "concern", "low", "high", "flag")):
-        return "#f39c12", "WARN"
-    # Green: all-clear
-    return "#2ecc71", "PASS"
+def _infer_status_with_llm(llm, text):
+    """Ask the LLM to classify the QC summary as PASS, WARN, or FAIL."""
+    STATUS_MAP = {
+        "PASS": ("#2ecc71", "PASS"),
+        "WARN": ("#f39c12", "WARN"),
+        "FAIL": ("#e74c3c", "FAIL"),
+    }
+
+    prompt = (
+        "You are a QC status classifier. Based on the following QC summary, "
+        "reply with exactly one word: PASS, WARN, or FAIL.\n"
+        "- PASS: results are good, no significant issues.\n"
+        "- WARN: some minor concerns or metrics slightly outside ideal range.\n"
+        "- FAIL: serious quality problems, critical failures, or corrupted data.\n\n"
+        f"QC Summary:\n{text}\n\nStatus:"
+    )
+
+    try:
+        response = llm.create_chat_completion(
+            messages=[
+                {"role": "system", "content": "Reply with exactly one word: PASS, WARN, or FAIL."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.0,
+            max_tokens=4,
+        )
+        label = response["choices"][0]["message"]["content"].strip().upper()
+        # Extract the first valid token in case the model is chatty
+        for token in label.split():
+            if token in STATUS_MAP:
+                print(f"  LLM status classification: {token}")
+                return STATUS_MAP[token]
+    except Exception as e:
+        print(f"  ⚠️  Status classification failed ({e}), defaulting to WARN")
+
+    # Default to WARN if classification is unclear
+    return STATUS_MAP["WARN"]
 
 
-def generate_html_output(reply, html_output, sample_name="Sample"):
+def generate_html_output(reply, html_output, llm, sample_name="Sample"):
     """Write a MultiQC-compatible custom HTML file with a status badge."""
-    color, status_label = _infer_status_color(reply)
+    color, status_label = _infer_status_with_llm(llm, reply)
 
     # Convert plain-text/markdown bullet points to <li> elements
     lines = reply.strip().splitlines()
@@ -404,7 +430,7 @@ Provide a concise summary:"""
 
     # Write HTML output if requested
     if html_output:
-        generate_html_output(reply, html_output, sample_name)
+        generate_html_output(reply, html_output, llm, sample_name)
         print(f"✓ HTML output written to: {html_output}")
         print("="*60)
 
