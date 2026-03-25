@@ -3,6 +3,7 @@
 import argparse
 import html
 import json
+import os
 import re
 
 import llama_cpp
@@ -334,8 +335,14 @@ Section: {section_name}
 
 Provide a concise summary:"""
 
+            # Use a smaller max_tokens for chunks, preventing context overflow
+            # 1024 tokens is plenty for a concise section summary
+            chunk_prompt_tokens = estimate_tokens(system_prompt + prompt)
+            available_chunk_tokens = max(10, context_size - chunk_prompt_tokens - 200)
+            chunk_max_tokens = min(1024, min(max_tokens, available_chunk_tokens))
+
             try:
-                summary = process_with_llm(llm, prompt, temperature, max_tokens, system_prompt)
+                summary = process_with_llm(llm, prompt, temperature, chunk_max_tokens, system_prompt)
                 summaries.append(f"### {section_name}\n{summary}")
                 print(f"  ✓ Generated ({estimate_tokens(summary)} tokens)\n")
             except Exception as e:
@@ -367,8 +374,13 @@ Provide a concise summary:"""
                 batch_text = "\n\n".join(batch)
                 prompt = f"Synthesize these QC summaries into a brief overview:\n\n{batch_text}"
 
+                # Calculate safe token limits for meta summaries
+                meta_prompt_tokens = estimate_tokens(system_prompt + prompt)
+                available_meta_tokens = max(10, context_size - meta_prompt_tokens - 200)
+                meta_max_tokens = min(max_tokens, available_meta_tokens)
+
                 try:
-                    meta_summary = process_with_llm(llm, prompt, temperature, max_tokens, system_prompt)
+                    meta_summary = process_with_llm(llm, prompt, temperature, meta_max_tokens, system_prompt)
                     meta_summaries.append(meta_summary)
                     print(f"  ✓ Generated ({estimate_tokens(meta_summary)} tokens)\n")
                 except Exception as e:
@@ -379,20 +391,25 @@ Provide a concise summary:"""
             print(f"After reduction: ~{estimate_tokens(combined_summaries)} tokens\n")
 
         final_prompt = f"""
-    You are an expert in bioinformatics, sequencing technologies, genomics data analysis, and adjacent fields.
-    You are given data from such a report. Your task is to analyse the data, and
-    give 1-2 bullet points of a very short and concise overall summary for the results.
-    Don't waste words: mention only the important QC issues. If there are no issues, just say so.
-    Just print one or two bullet points, nothing else.
-    Please do not add any extra headers to the response.
+
+    { system_prompt }
 
     {combined_summaries}
 
     """
 
+        with open("final_prompt.log", "w") as log_f:
+            log_f.write(final_prompt)
+        print("✓ Final prompt logged to: final_prompt.log")
+
         print("Generating final assessment...")
+        final_prompt_tokens = estimate_tokens(final_prompt)
+        available_final_tokens = max(10, context_size - final_prompt_tokens - 200)
+        # Final output won't need double max_tokens, and must fit in context window
+        final_max_tokens = min(max_tokens, available_final_tokens)
+
         try:
-            final_summary = process_with_llm(llm, final_prompt, temperature, max_tokens * 2, system_prompt)
+            final_summary = process_with_llm(llm, final_prompt, temperature, final_max_tokens, system_prompt)
             print(f"✓ Generated ({estimate_tokens(final_summary)} tokens)\n")
         except Exception as e:
             print(f"✗ Error: {e}\n")
@@ -409,11 +426,21 @@ Provide a concise summary:"""
             {"role": "user", "content": text}
         ]
 
+        final_prompt = f"\n\n{system_prompt}\n\n{text}\n\n"
+        with open("final_prompt.log", "w") as log_f:
+            log_f.write(final_prompt)
+        print("✓ Final prompt logged to: final_prompt.log")
+
         try:
+            # Dynamically calc final tokens to prevent crash
+            final_prompt_tokens = estimate_tokens(final_prompt)
+            available_final_tokens = max(10, context_size - final_prompt_tokens - 200)
+            safe_max_tokens = min(max_tokens, available_final_tokens)
+
             response = llm.create_chat_completion(
                 messages=messages_json,
                 temperature=temperature,
-                max_tokens=max_tokens,
+                max_tokens=safe_max_tokens,
             )
             reply = response["choices"][0]["message"]["content"]
         except Exception as e:
@@ -498,6 +525,12 @@ Examples:
                        help="System prompt")
 
     args = parser.parse_args()
+
+    # If system_prompt is a file path, read its contents
+    if os.path.isfile(args.system_prompt):
+        with open(args.system_prompt, "r") as f:
+            args.system_prompt = f.read().strip()
+        print(f"System prompt loaded from file ({len(args.system_prompt)} chars)")
 
     # Validate chunk_fraction
     if not 0.1 <= args.chunk_fraction <= 0.9:

@@ -6,7 +6,7 @@ process LLAMA_RUN_PYTHON {
     container "quay.io/nf-core/llama-cpp-python:0.1.9"
 
     input:
-    tuple val(meta), path(system), path(prompt_file)
+    tuple val(meta), path(prompt_file), path(system)
     path model
 
     when:
@@ -34,6 +34,6 @@ process LLAMA_RUN_PYTHON {
     """
 
     output:
-    tuple val(meta), path("${prefix}.md"),       emit: output
+    tuple val(meta), path("${prefix}.md"), emit: output
     tuple val(meta), path("${prefix}_mqc.html"), emit: html
 }
