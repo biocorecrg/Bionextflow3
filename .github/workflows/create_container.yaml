@@ -30,7 +30,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/deseq_2026
+          images: ghcr.io/${{ github.event.repository.name }}/deseq_2026
           tags: |
             type=semver,pattern={{version}}
             type=edge,branch=main
