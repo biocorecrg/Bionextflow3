@@ -5,9 +5,9 @@ on:
   push:
     branches:
      - main
+    paths:
+     - "modules/local/multiqc_pca/deseq_Dockerfile"
     
-    
-
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/deseq_2026
           tags: |
             type=semver,pattern={{version}}
             type=edge,branch=main
