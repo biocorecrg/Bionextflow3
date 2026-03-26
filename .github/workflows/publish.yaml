@@ -5,8 +5,7 @@ on:
   push:
     branches:
      - main
-    paths:
-     - "modules/local/multiqc_pca/deseq_ deseq_Dockerfile"
+    
     
 
 jobs:
