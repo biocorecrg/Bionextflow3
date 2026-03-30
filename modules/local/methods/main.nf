@@ -1,7 +1,7 @@
 process METHODS_SECTION {
 
     label 'process_low'
-    container 'docker.io/biocorecrg/methods:0.1'
+    container 'ghcr.io/biocorecrg/bionextflow3/biocorecrg_methods:edge'
 
     input:
     path pipeline_paths, stageAs: "?/*"

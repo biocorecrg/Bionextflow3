@@ -39,5 +39,5 @@ RUN bash -c 'source $HOME/.nvm/nvm.sh   && \
     echo "export PATH=$NPM_GLOBAL_BIN:\$PATH" >> $HOME/.bashrc && \
     echo "export PATH=$NPM_GLOBAL_BIN:\$PATH" >> $HOME/.profile';
 
-ENV PATH=/home/node/.nvm/versions/node/$NODE_VERSION/bin:$PATH
-ENV NODE_PATH=/home/node/.nvm/versions/node/$NODE_VERSION/lib/node_modules
+ENV PATH=/root/.nvm/versions/node/$NODE_VERSION/bin:$PATH
+ENV NODE_PATH=/root/.nvm/versions/node/$NODE_VERSION/lib/node_modules
