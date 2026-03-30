@@ -6,7 +6,7 @@ on:
     branches:
      - main
     paths:
-     - "modules/local/multiqc_pca/deseq_Dockerfile"
+     - "modules/local/multiqc_pca/Dockerfile"
     
 jobs:
   build_and_publish:
@@ -40,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./modules/local/multiqc_pca/deseq_Dockerfile
+          file: ./modules/local/multiqc_pca/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
