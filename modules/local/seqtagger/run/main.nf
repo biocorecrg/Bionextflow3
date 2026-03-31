@@ -2,7 +2,7 @@ process SEQTAGGER {
     tag "$meta.id"
     label 'gpu'
 
-    container "docker://lpryszcz/seqtagger:1.0d"
+    container "docker://lpryszcz/seqtagger:2.0a"
 
     input:
     tuple val(meta), path(pod5)
