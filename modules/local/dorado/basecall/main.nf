@@ -1,6 +1,6 @@
 process DORADO_BASECALL {
     tag "$meta.id"
-    label 'process_gpu'
+    label 'gpu'
 
     container "docker.io/nanoporetech/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e"
 
