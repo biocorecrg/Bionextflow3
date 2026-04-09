@@ -1,9 +1,11 @@
 process LLAMA_RUN_PYTHON {
     tag "${meta.id}"
-    label 'process_gpu'
+    label 'gpu'
 
     //container "docker.io/biocorecrg/llama:0.1"
-    container "quay.io/nf-core/llama-cpp-python:0.1.9"
+    //container "quay.io/nf-core/llama-cpp-python:0.1.9"
+    container "${ task.ext.use_gpu ? 'quay.io/nf-core/llama-cpp-python:0.1.9' : 'community.wave.seqera.io/library/llama-cpp-python:0.3.16--b351398cd0ea7fc5' }"
+
 
     input:
     tuple val(meta), path(prompt_file), path(system)
