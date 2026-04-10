@@ -30,7 +30,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/biocorecrg_methods
+          images: ghcr.io/${{ github.repository }}/counts_to_sparsemtx
           tags: |
             type=semver,pattern={{version}}
             type=edge,branch=main
