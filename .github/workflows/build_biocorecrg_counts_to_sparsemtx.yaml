@@ -1,4 +1,4 @@
-name: Publish Docker Image
+name: Publish Counts To SparseMTX Docker Image
 
 on:
   workflow_dispatch:
