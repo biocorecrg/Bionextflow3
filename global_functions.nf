@@ -1,7 +1,6 @@
 include { processVersionsFromYAML } from "../subworkflows/nf-core/utils_nfcore_pipeline/"
 include { workflowVersionToYAML   } from "../subworkflows/nf-core/utils_nfcore_pipeline/"
 
-
 // colors and other
 def colorCodes() {
     def colorcodes = [:]
