@@ -6,7 +6,7 @@ on:
     branches:
       - main
     tags:
-      - "v*.*.*"
+      - "biocorecrg_deseq-v*.*.*"
     paths:
       - "modules/local/multiqc_pca/Dockerfile"
 
