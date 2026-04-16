@@ -133,7 +133,7 @@ def add_report_header_info(multiqc_file, values) {
     // write file
     newFile.text = yamlContent
 
-    return (channel.fromPath(newFile).first())
+    return (channel.fromPath(newFile).collect())
 }
 
 
@@ -260,14 +260,14 @@ def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
 def fromParToValueFileChannel(input_string, mytype = "file") {
     def myfile = []
     if (input_string) {
-        myfile = channel.fromPath(input_string, checkIfExists: true, type: mytype).first()
+        myfile = channel.fromPath(input_string, checkIfExists: true, type: mytype).collect()
     }
     return (myfile)
 }
 
 // from nf-core standard channel to value channel
 def fromNFcoreToValueChannel(input_channel) {
-    def val_channel = input_channel.map { it[1] }.first()
+    def val_channel = input_channel.map { it[1] }.collect()
     return (val_channel)
 }
 
