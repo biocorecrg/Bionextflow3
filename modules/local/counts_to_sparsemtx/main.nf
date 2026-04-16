@@ -1,4 +1,5 @@
 process COUNTS_TO_SPARSEMTX {
+    label 'process_low'
 
     container 'ghcr.io/biocorecrg/bionextflow3/counts_to_sparsemtx:latest'
 
