@@ -4,8 +4,6 @@ FROM bioconductor/bioconductor_docker:RELEASE_3_14
 # File Author / Maintainer
 MAINTAINER Luca Cozzuto <lucacozzuto@gmail.com> 
 
-RUN echo "test"
-
 RUN Rscript -e "BiocManager::install(c('GenomicRanges', 'SummarizedExperiment', 'genefilter', 'geneplotter'))"
 RUN Rscript -e "BiocManager::install(c('DESeq2', 'tximport', 'pheatmap'), dependencies=TRUE)"
 RUN Rscript -e "BiocManager::install(c('GEOquery', 'Biobase', 'affy', 'limma', 'ggplot2', 'ggdendro', 'AnnotationDbi', 'hgu133plus2.db', 'hexbin', 'dendextend','sva'), dependencies=TRUE)"

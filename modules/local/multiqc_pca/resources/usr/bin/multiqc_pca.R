@@ -18,6 +18,8 @@ parser$add_argument("-batch", "--add_batch", action='store_true', help="Remove b
 parser$add_argument("-pcnum", "--Number_principal_components", type="integer", default=4, help="Number of principal components (one for each column) data to extract to the data table, [default %(default)s]")
 parser$add_argument("-genes", "--Gene_list", type="character", default="", help="Comma separated list of genes (max 10), for boxplot gene expression between conditions (e.g: -genes Slc26a4,Cd276,Cyth4)")
 parser$add_argument("-color", "--PCA_color",type="character", default="", help="Column in desc.txt to be used for coloring PCA plot")
+parser$add_argument("-gsea", "--GSEA_files", action="store_true", help="Creates cls (samples grouped by condition column) and normalized counts table for GSEA analysis")
+
 
 
 #Get command line options, if help option encountered - print help and exit:
@@ -46,20 +48,18 @@ vsd<-makeVST(dds, FALSE)
 condition<-gsub("~","",args$Assay_field) 
 print(args$Number_principal_components)
 
+##################################  PCA #############################
 
 pca_colors <- c("black","#1C9BCD","magenta","#E69F00","cyan","red","#14db1e","#dad60e","blue","darkred","#09e0d5","darkgreen","#bf3dbf","#8b836e","#4f0e29")
 
-# Extended color palette for boxplots to support up to 50 groups
-boxplot_colors <- c("black","#1C9BCD","magenta","#E69F00","cyan","red","#14db1e","#dad60e","blue","darkred","#09e0d5","darkgreen","#bf3dbf","#8b836e","#4f0e29")
-
 no_batch_pca <- create_pca_data(vsd, condition, args$Number_principal_components, pca_colors)
 
-	# Save PCA data and variance tables
+# Save PCA data and variance tables, this tables will be read by multiqc_pca plugin 
 write.table(no_batch_pca$data, file=paste0("PCA_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
 write.table(no_batch_pca$variance, file=paste0("PCA_variance.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
 
 
-
+### Create PCA colored by another column name
 if (args$PCA_color != "") {
 	color_condition <- args$PCA_color
 	prefix <- paste0("PCA_colored_by_", args$PCA_color)
@@ -78,13 +78,17 @@ if (args$Desc_genes != "") {
     
 }
 
-###### Sample CLustering table
+
+##################################  Sample CLustering table ################################## 
 
 sample_clustering_matrix <- sample_clustering(vsd)
 write.table(sample_clustering_matrix, file="Sample_Clustering_matrix.tsv", sep="\t", quote=FALSE, row.names=TRUE, col.names=NA)
 
 
-####### Gene list expression boxplots for vst and log2(deseq-normalized)
+##################################  Gene list expression boxplots for vst and log2(deseq-normalized) ##################################
+
+# Extended color palette for boxplots to support up to 50 groups
+boxplot_colors <- c("black","#1C9BCD","magenta","#E69F00","cyan","red","#14db1e","#dad60e","blue","darkred","#09e0d5","darkgreen","#bf3dbf","#8b836e","#4f0e29")
 
 if (args$Desc_genes != "" & args$Gene_list != "") {
 
@@ -92,7 +96,7 @@ create_genes_boxplots(dds, args$Gene_list, groups, desc, prefix = "", colors = b
 
 }
 
-### Creating files for BATCH effect removal 
+################################## BATCH effect removal ##################################
 
 if (args$add_batch != "") {
     if (grepl("batch", args$Assay_field)) {
@@ -129,6 +133,8 @@ if (args$add_batch != "") {
 		se2 <- DESeq(dds)
 		vsd <- makeVST(se2, FALSE)
 
+		##### PCA for the counts with batch effect removal
+		
 		batch_pca <- create_pca_data(vsd, condition, args$Number_principal_components, pca_colors)
 		write.table(batch_pca$data, file=paste0("batch_PCA_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
 		write.table(batch_pca$variance, file=paste0("batch_PCA_variance.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
@@ -153,4 +159,10 @@ if (args$add_batch != "") {
 
 }
 
+################################## Creating GSEA files ##################################
 
+if (args$GSEA_files) {
+
+	makeGseaFiles(norm_counts, args$Desc_exp, condition)
+
+}

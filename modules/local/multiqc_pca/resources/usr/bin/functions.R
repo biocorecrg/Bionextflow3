@@ -597,3 +597,37 @@ create_genes_boxplots <- function(dds, gene_list, groups,desc_genes, prefix, col
 	genes_boxplot(norm_counts = norm_log, groups = groups,genes_desc =  desc_genes,genes =  genes, title = paste(prefix,"log2_deseq_norm",sep="_"), colors = colors, condition = condition)
 	genes_boxplot(norm_counts = vst_mat, groups = groups,genes_desc =  desc_genes,genes =  genes, title = paste(prefix,"vst",sep="_"), colors = colors, condition = condition)
 	}
+
+
+makeGseaFiles <- function(norm_counts, desc, condition) {
+  ######### write normalized counts for GSEA
+x <- norm_counts
+x$gene.type <- NULL
+
+sample_counts<-x[,3:ncol(x)-1] ## Selecting the sample columns with the normalized values. 
+y <- x[,c("Row.names","gene.name")] ## Select the gene_id and gene_name columns
+x <- data.frame(NAME=y[,1],	DESCRIPTION=y[,2])
+x <- cbind(x,sample_counts)
+
+write.table(x, "deseq2_normalized_counts_for_GSEA.txt", quote=F, col.names=T, row.names=F, sep="\t")
+
+########## write cls file for GSEA for cell condition
+
+sampleTable <- read.table(args$Desc_exp, sep="\t", header=T)
+
+# Extract values from the condition column
+conditions     <- sampleTable$condition
+ordered_conditions <- sort(conditions)
+n_samples      <- length(ordered_conditions)
+unique_conds   <- unique(ordered_conditions)   # preserves order of first appearance
+n_classes      <- length(unique_conds)
+
+# Build the three lines of the CLS file
+line1 <- paste(n_samples, n_classes, 1)
+line2 <- paste("#", paste(unique_conds, collapse = " "))
+line3 <- paste(ordered_conditions, collapse = " ")
+
+# Write to file
+output_path <- "phenotype_labels.cls"
+writeLines(c(line1, line2, line3), con = output_path)
+}

@@ -6,7 +6,7 @@ on:
     branches:
       - main
     tags:
-      - "biocorecrg_deseq-v*.*.*"
+      - "multiqc_pca@*.*.*"
     paths:
       - "modules/local/multiqc_pca/Dockerfile"
 
@@ -34,8 +34,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/biocorecrg_deseq
           tags: |
-            type=semver,pattern={{version}}                                                        # v1.2.3 → 1.2.3
-            type=ref,event=tag                                                                     # v1.2.3 → v1.2.3
+            type=semver,pattern=multiqc_pca@*.*.*                          # multiqc_pca@1.2.3 
+            type=ref,event=tag                                                                     
             type=raw,value=latest,enable=${{ !startsWith(github.ref, 'refs/tags/') }}
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
