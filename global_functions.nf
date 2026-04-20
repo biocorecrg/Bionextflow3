@@ -119,21 +119,14 @@ def make_yaml_methods(mymap, toplevel) {
 }
 
 def add_report_header_info(multiqc_file, values) {
-
-    def newFile = file("${workDir}/new_multiqc_config.yaml")
-
     def yamlContent = "report_header_info:\n"
     values.each { k, v ->
         yamlContent += "  - ${k}: \"${v}\"\n"
     }
     def old_file = file(multiqc_file)
-
     yamlContent += "\n" + old_file.text
 
-    // write file
-    newFile.text = yamlContent
-
-    return (channel.fromPath(newFile).collect())
+    return channel.of(yamlContent).collectFile(name: 'new_multiqc_config.yaml')
 }
 
 
