@@ -1,13 +1,15 @@
-name: Publish Docker Image
+name: Publish DESeq Docker Image
 
 on:
   workflow_dispatch:
   push:
     branches:
-     - main
+      - main
+    tags:
+      - "multiqc_pca@*.*.*"
     paths:
-     - "modules/local/multiqc_pca/Dockerfile"
-    
+      - "modules/local/multiqc_pca/Dockerfile"
+
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
@@ -30,12 +32,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/biocorecrg_deseq
+          images: ghcr.io/${{ github.repository_owner }}/biocorecrg_deseq
           tags: |
-            type=semver,pattern={{version}}
-            type=edge,branch=main
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-
+            type=semver,pattern=multiqc_pca@*.*.*                          # multiqc_pca@1.2.3 
+            type=ref,event=tag                                                                     
+            type=raw,value=latest,enable=${{ !startsWith(github.ref, 'refs/tags/') }}
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:

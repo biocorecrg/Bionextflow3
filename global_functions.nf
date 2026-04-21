@@ -1,6 +1,7 @@
 include { processVersionsFromYAML } from "../subworkflows/nf-core/utils_nfcore_pipeline/"
 include { workflowVersionToYAML   } from "../subworkflows/nf-core/utils_nfcore_pipeline/"
 
+
 // colors and other
 def colorCodes() {
     def colorcodes = [:]
@@ -127,21 +128,14 @@ def make_yaml_methods(mymap, toplevel) {
 }
 
 def add_report_header_info(multiqc_file, values) {
-
-    def newFile = file("${workDir}/new_multiqc_config.yaml")
-
     def yamlContent = "report_header_info:\n"
     values.each { k, v ->
         yamlContent += "  - ${k}: \"${v}\"\n"
     }
     def old_file = file(multiqc_file)
-
     yamlContent += "\n" + old_file.text
 
-    // write file
-    newFile.text = yamlContent
-
-    return (channel.fromPath(newFile).first())
+    return channel.of(yamlContent).collectFile(name: 'new_multiqc_config.yaml')
 }
 
 
@@ -268,14 +262,14 @@ def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
 def fromParToValueFileChannel(input_string, mytype = "file") {
     def myfile = []
     if (input_string) {
-        myfile = channel.fromPath(input_string, checkIfExists: true, type: mytype).first()
+        myfile = channel.fromPath(input_string, checkIfExists: true, type: mytype).collect()
     }
     return (myfile)
 }
 
 // from nf-core standard channel to value channel
 def fromNFcoreToValueChannel(input_channel) {
-    def val_channel = input_channel.map { it[1] }.first()
+    def val_channel = input_channel.map { it[1] }.collect()
     return (val_channel)
 }
 

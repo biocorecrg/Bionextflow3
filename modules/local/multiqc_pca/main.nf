@@ -1,6 +1,6 @@
 process MULTIQC_PCA {
     
-    container 'docker.io/fabianandrade/deseq2:2026_1'
+    container 'ghcr.io/biocorecrg/biocorecrg_deseq:latest'
 
     input:
     tuple val(meta), path(input_files)

@@ -1,0 +1,35 @@
+process NANOCONSENSUS {
+    tag "${meta.id}"
+    label 'process_middle'
+
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'docker.io/biocorecrg/mop_consensus:0.1'
+        : 'docker.io/biocorecrg/mop_consensus:0.1'}"
+
+    input:
+
+    tuple val(meta), path(Epi_Sample), path(Epi_IVT), path(baseQ), path(nanorms_si), path(nanorms_dt), path(nanorms_sd), val(chrName), val(chrStart), val(chrEnd)
+    tuple val(meta2), path(reference)
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: meta.id
+
+    """
+	NanoConsensus.R -Epi_Sample ${Epi_Sample} \
+	-Epi_IVT ${Epi_IVT} \
+	-BaseQ ${baseQ} \
+	-nanoRMS_SI ${nanorms_si} -nanoRMS_DT ${nanorms_dt} -nanoRMS_SD ${nanorms_sd}\
+	-chr ${chrName} \
+	-ini_pos ${chrStart} -fin_pos ${chrEnd} \
+	-output ${prefix} \
+	-fasta ${reference} ${args}
+    """
+
+    output:
+    tuple val(meta), path("*"), emit: output
+    tuple val("${task.process}"), val("nanoconsensus"), eval("echo 1.0"), topic: versions
+}
