@@ -112,9 +112,18 @@ def end_messaged(hook) {
 }
 
 def make_yaml_methods(mymap, toplevel) {
-    //def myFile = file("${workDir}/methods.yaml")
-    def yaml_text = "${toplevel}:\n" + mymap.collect { k, v -> "  ${k}: \"${v}\"" }.join("\n")
-    return (yaml_text)
+    def yaml = new org.yaml.snakeyaml.Yaml()
+    def flattenedMap = [:]
+    mymap.each { k, v ->
+        if (v instanceof Map) {
+            v.each { k2, v2 ->
+                flattenedMap[k2] = v2
+            }
+        } else {
+            flattenedMap[k] = v
+        }
+    }
+    return yaml.dumpAsMap([(toplevel): flattenedMap]).trim()
 }
 
 def add_report_header_info(multiqc_file, values) {
