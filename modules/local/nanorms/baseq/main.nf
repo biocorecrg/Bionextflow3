@@ -1,6 +1,6 @@
 process NANORMS_BASEQ {
     tag "$meta.id vs $meta2.id"
-    label 'process_middle'
+    label 'process_medium'
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'docker.io/lpryszcz/nanorms4:v4.0a2' :
