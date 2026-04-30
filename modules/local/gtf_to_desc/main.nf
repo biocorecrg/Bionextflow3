@@ -10,8 +10,8 @@ process GTF_TO_DESC {
     tuple val(meta), path(gtffile)
 
     output:
-    tuple val(meta), path("gene_desc.txt")         , emit: gene_desc
-
+    tuple val(meta), path("gene_desc.txt"), emit: gene_desc
+    tuple val(meta), path("gene_desc_coordinates.txt"), emit: gene_desc_coordinates
     when:
     task.ext.when == null || task.ext.when
 
