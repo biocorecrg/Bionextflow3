@@ -14,7 +14,7 @@ process SPACEMAKE_ADD_SAMPLE {
     tuple val(meta4), path(barcode_folder)
 
     output:
-    path  "versions.yml"                    , emit: versions
+    tuple val("${task.process}"), val('spacemake'), eval('spacemake --version --version'), topic: versions, emit: versions
     tuple val(meta), path("project_df.csv") , emit: csv
 
     when:
@@ -39,10 +39,6 @@ process SPACEMAKE_ADD_SAMPLE {
 	   --barcode-flavor openst
 
 	
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        spacemake: \$(  spacemake --version --version  )
-    END_VERSIONS
     """
 
     stub:
@@ -50,9 +46,5 @@ process SPACEMAKE_ADD_SAMPLE {
     """
     touch ${prefix}_fc_tiles
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        spacemake: \$(  spacemake --version --version  )
-    END_VERSIONS
     """
 }

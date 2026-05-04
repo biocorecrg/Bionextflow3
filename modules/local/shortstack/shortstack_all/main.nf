@@ -19,7 +19,7 @@ process SHORTSTACK {
     tuple val(meta), path("shortstack_output/Counts.txt")           , emit: counts
     tuple val(meta), path("shortstack_output/Results.txt")          , emit: results_txt
     tuple val(meta), path("shortstack_output/alignment_details.tsv"), emit: aln_details
-    path  "versions.yml"                                            , emit: versions
+    tuple val("${task.process}"), val('shortstack'), eval('ShortStack --version | sed "s/^ShortStack//g"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -47,10 +47,6 @@ process SHORTSTACK {
         --outdir shortstack_output \\
         --threads ${task.cpus} \\
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        shortstack: \$( ShortStack --version | sed 's/^ShortStack//g')
-    END_VERSIONS
     """
 
 }

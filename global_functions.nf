@@ -147,11 +147,30 @@ def emptyMeta() {
 // make Software Version YAML
 
 def makeSoftwareVersionYamlFile(ch_versions) {
-    def ch_collated_versions = softwareVersionsToYAML(ch_versions).collectFile(
-        name: 'nf_core_' + 'pipeline_software_' + 'mqc_' + 'versions.yml',
-        sort: true,
-        newLine: true,
-    )
+    def ch_collated_versions = softwareVersionsToYAML(ch_versions)
+        .map { yaml_str -> 
+            def yaml = new org.yaml.snakeyaml.Yaml()
+            return yaml.load(yaml_str)
+        }
+        .reduce([:]) { acc, item ->
+            item.each { k, v ->
+                if (!acc.containsKey(k)) {
+                    acc[k] = [:]
+                }
+                if (v instanceof Map) {
+                    acc[k].putAll(v)
+                }
+            }
+            return acc
+        }
+        .map { mergedMap ->
+            def yaml = new org.yaml.snakeyaml.Yaml()
+            return yaml.dumpAsMap(mergedMap).trim()
+        }
+        .collectFile(
+            name: 'nf_core_' + 'pipeline_software_' + 'mqc_' + 'versions.yml',
+            newLine: true,
+        )
 
     return ch_collated_versions
 }

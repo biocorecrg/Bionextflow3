@@ -16,7 +16,7 @@ process BCL2FASTQ {
     tuple val(meta), path("${meta.id}/Stats")                               , emit: stats
     tuple val(meta), path("InterOp/*.bin")                                  , emit: interop
     tuple val(meta), path("IndexMetricsOut.bin")                            , optional:true, emit: index_metrics // PATCH
-    path("versions.yml")                                                    , emit: versions
+    tuple val("${task.process}"), val('bcl2fastq'), eval('bcl2fastq -V 2>&1 | grep -m 1 bcl2fastq | sed "s/^.*bcl2fastq v//"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -68,9 +68,5 @@ process BCL2FASTQ {
 
     cp -r ${input_dir}/InterOp .
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bcl2fastq: \$(bcl2fastq -V 2>&1 | grep -m 1 bcl2fastq | sed 's/^.*bcl2fastq v//')
-    END_VERSIONS
     """
 }

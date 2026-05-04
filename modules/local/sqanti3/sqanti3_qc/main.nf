@@ -16,7 +16,7 @@ process SQANTI3_QC {
     tuple val(meta), path("sqanti3_results/*_corrected.fasta")             , emit: corrected_fasta, optional: true
     tuple val(meta), path("sqanti3_results/*.pdf")                         , emit: plots, optional: true
     tuple val(meta), path("sqanti3_results/*.html")                        , emit: report, optional: true
-    path "versions.yml"                                                    , emit: versions
+    tuple val("${task.process}"), val('sqanti3'), eval('sqanti3_qc.py --version 2>&1 | grep -oP "SQANTI3 v\K[0-9.]+" || echo "5.2.2"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -34,11 +34,6 @@ process SQANTI3_QC {
     ${args}
     
     # Generate versions
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        sqanti3: \$(sqanti3_qc.py --version 2>&1 | grep -oP 'SQANTI3 v\\K[0-9.]+' || echo "5.2.2")
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-    END_VERSIONS
     """
 
 

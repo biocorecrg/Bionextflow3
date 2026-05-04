@@ -12,7 +12,7 @@ process FILTER_SHORTSTACK {
 
     output:
     tuple val(meta), path("*_filter.bam")                       , emit: filtered_bam
-    path  "versions.yml"                                        , emit: versions
+    tuple val("${task.process}"), val('samtools'), eval('samtools --version | head -n 1 | sed "s/samtools //"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,10 +24,6 @@ process FILTER_SHORTSTACK {
     """
     samtools view -@ ${task.cpus} -h ${bam} | awk '\$0 ~ /^@/ || \$0 ~ /XY:Z:U/' | samtools view -bS - > ${meta.id}_filter.bam
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
     """
 
 }

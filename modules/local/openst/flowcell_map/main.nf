@@ -12,7 +12,7 @@ process FLOWCELL_MAP {
 
     output:
     tuple val(meta), path("*_fc_tiles"), emit: tiles
-    path  "versions.yml"               , emit: versions
+    tuple val("${task.process}"), val('openst'), eval('openst --version'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,10 +28,6 @@ process FLOWCELL_MAP {
        --tiles-out ./${prefix}_fc_tiles \
        --parallel-processes ${task.cpus} ${args}
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        openst: \$(  openst --version  )
-    END_VERSIONS
     """
 
     stub:
@@ -39,9 +35,5 @@ process FLOWCELL_MAP {
     """
     touch ${prefix}_fc_tiles
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        openst: \$(  openst --version  )
-    END_VERSIONS
     """
 }

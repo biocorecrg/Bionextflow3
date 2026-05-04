@@ -16,7 +16,9 @@ process SEURAT {
     output:
     tuple val(meta), path("*.pdf"), emit: pdfs
     tuple val(meta), path("*.rds"), emit: rds
-    path "versions.yml"           , emit: versions
+    tuple val("${task.process}"), val('seurat'), eval("Rscript -e 'cat(as.character(packageVersion(\"Seurat\")))'"), topic: versions, emit: versions_seurat
+    tuple val("${task.process}"), val('singler'), eval("Rscript -e 'cat(as.character(packageVersion(\"SingleR\")))'"), topic: versions, emit: versions_singler
+    tuple val("${task.process}"), val('celldex'), eval("Rscript -e 'cat(as.character(packageVersion(\"celldex\")))'"), topic: versions, emit: versions_celldex
 
 
 
@@ -178,16 +180,6 @@ ${script_anno}
 # save seurat object
 saveRDS(seurObj, file = "${prefix}.rds")
 
-out_file <- "versions.yml"
-
-versions <- c(
-  "    ${task.process}:",
-  paste("        seurat:", packageVersion("Seurat")),
-  paste("        singler:", packageVersion("SingleR")),
-  paste("        celldex:", packageVersion("celldex"))
-)
-
-writeLines(versions, con = out_file)
 quit("no")
 
 EOL

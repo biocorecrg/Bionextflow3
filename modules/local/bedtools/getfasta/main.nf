@@ -12,7 +12,7 @@ process BEDTOOLS_GETFASTA {
 
     output:
     tuple val(meta), path("*.fa"), emit: fasta
-    path "versions.yml"          , emit: versions
+    tuple val("${task.process}"), val('bedtools'), eval('bedtools --version | sed -e "s/bedtools v//g"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -29,10 +29,6 @@ process BEDTOOLS_GETFASTA {
         -bed $bed \\
         -fo ${prefix}.fa
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bedtools: \$(bedtools --version | sed -e "s/bedtools v//g")
-    END_VERSIONS
     """
 
     stub:
@@ -41,9 +37,5 @@ process BEDTOOLS_GETFASTA {
     """
     touch ${prefix}.fa
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bedtools: \$(bedtools --version | sed -e "s/bedtools v//g")
-    END_VERSIONS
     """
 }

@@ -17,7 +17,7 @@ process SPACEMAKE_RUN {
     tuple val(meta7), path(annotation)
 
     output:
-    path  "versions.yml"                    , emit: versions
+    tuple val("${task.process}"), val('spacemake'), eval('spacemake --version --version'), topic: versions, emit: versions
     tuple val(meta), path("project_df.csv") , emit: csv
 
     when:
@@ -28,10 +28,6 @@ process SPACEMAKE_RUN {
     """
 	spacemake run --cores ${task.cpus}
 	
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        spacemake: \$(  spacemake --version --version  )
-    END_VERSIONS
     """
 
     stub:
@@ -39,9 +35,5 @@ process SPACEMAKE_RUN {
     """
     touch ${prefix}_fc_tiles
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        spacemake: \$(  spacemake --version --version  )
-    END_VERSIONS
     """
 }

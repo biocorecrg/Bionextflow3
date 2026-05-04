@@ -14,7 +14,7 @@ process SPACEMAKE_ADD_SPECIES {
     output:
     tuple val(meta), path("puck_data")   , emit: puck
     tuple val(meta), path("config.yaml") , emit: config
-    path  "versions.yml"                 , emit: versions
+    tuple val("${task.process}"), val('spacemake'), eval('spacemake --version --version'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,10 +28,6 @@ process SPACEMAKE_ADD_SPECIES {
     spacemake config add_species  --name ${meta.id}  --sequence ${genome}  --annotation ${annotation} 
 
 	
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        spacemake: \$(  spacemake --version --version  )
-    END_VERSIONS
     """
 
     stub:
@@ -39,9 +35,5 @@ process SPACEMAKE_ADD_SPECIES {
     """
     touch ${prefix}_fc_tiles
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        spacemake: \$(  spacemake --version --version  )
-    END_VERSIONS
     """
 }

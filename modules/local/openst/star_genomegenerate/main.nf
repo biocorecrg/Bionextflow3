@@ -13,7 +13,7 @@ process STAR_GENOMEGENERATE {
 
     output:
     tuple val(meta), path("star_index")  , emit: species_folder
-    path  "versions.yml"                 , emit: versions
+    tuple val("${task.process}"), val('STAR'), eval('/opt/conda/bin/STAR-avx2 --version'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,10 +26,6 @@ process STAR_GENOMEGENERATE {
     """
  	/opt/conda/bin/STAR-avx2 --runMode genomeGenerate --runThreadN ${task.cpus} --genomeDir star_index --genomeFastaFiles ${fasta} --sjdbGTFfile ${gtf}
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        STAR: \$(  /opt/conda/bin/STAR-avx2 --version  )
-    END_VERSIONS
     """
 
     stub:
@@ -37,9 +33,5 @@ process STAR_GENOMEGENERATE {
     """
     touch species_data
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        STAR: \$(  /opt/conda/bin/STAR-avx2 --version  )
-    END_VERSIONS
     """
 }

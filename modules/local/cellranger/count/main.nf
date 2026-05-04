@@ -10,7 +10,7 @@ process CELLRANGER_COUNT {
 
     output:
     tuple val(meta), path("**/outs", type: 'dir')   , emit: outs
-    path "versions.yml"                             , emit: versions
+    tuple val("${task.process}"), val('cellranger'), eval('cellranger --version | cut -d "-" -f 2'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -36,9 +36,5 @@ process CELLRANGER_COUNT {
                    --localmem=${task.memory.toGiga()} 
                    
     
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        cellranger: \$(cellranger --version | cut -d "-" -f 2) 
-END_VERSIONS
    """
 }

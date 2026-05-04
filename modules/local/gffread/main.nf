@@ -14,7 +14,7 @@ process GFFREAD {
     tuple val(meta), path("*.gtf")  , emit: gtf             , optional: true
     tuple val(meta), path("*.gff3") , emit: gffread_gff     , optional: true
     tuple val(meta), path("*.fasta"), emit: gffread_fasta   , optional: true
-    path "versions.yml"             , emit: versions
+    tuple val("${task.process}"), val('gffread'), eval('gffread --version 2>&1'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -36,10 +36,6 @@ process GFFREAD {
         $args_sorted \\
         $output
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        gffread: \$(gffread --version 2>&1)
-    END_VERSIONS
     """
 
     stub:
@@ -51,9 +47,5 @@ process GFFREAD {
     """
     touch $output_name
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        gffread: \$(gffread --version 2>&1)
-    END_VERSIONS
     """
 }

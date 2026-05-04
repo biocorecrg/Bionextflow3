@@ -14,7 +14,7 @@ process ANNOTATE_SHORTSTACK {
 
     output:
     tuple val(meta), path("annotated_counts.txt.gz")            , emit: annotated_counts
-    path  "versions.yml"                                        , emit: versions
+    tuple val("${task.process}"), val('bedtools'), eval('bedtools --version | sed "s/^bedtools//g"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -43,10 +43,6 @@ process ANNOTATE_SHORTSTACK {
        paste half_table.txt raw_counts.txt | gzip -c > annotated_counts.txt.gz
        rm mygenes.gtf Results.bed raw_counts.txt half_table.txt intersect.txt.gz
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bedtools: \$( bedtools --version | sed 's/^bedtools//g')
-    END_VERSIONS
     """
 
 }

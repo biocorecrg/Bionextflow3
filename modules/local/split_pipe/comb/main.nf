@@ -11,7 +11,7 @@ process SPLITPIPE_COMB {
     
     output:
     tuple val(meta), path("${meta.id}")                       , emit: out
-    path  "versions.yml"                                      , emit: versions
+    tuple val("${task.process}"), val('split-pipe'), eval('split-pipe --version | cut -d " " -f 2 | sed "s/v//g"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,10 +24,6 @@ process SPLITPIPE_COMB {
        --mode comb --sublibraries ${sublib_folders} \
        --output_dir ${meta.id}
   
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        split-pipe: \$(split-pipe --version | cut -d ' ' -f 2 | sed 's/v//g')
-END_VERSIONS
     """
 
 

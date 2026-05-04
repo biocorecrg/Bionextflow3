@@ -12,7 +12,7 @@ process SHORTTRACKS {
 
     output:
     tuple val(meta), path("*.bw")                 , emit: bigwig
-    path  "versions.yml"                          , emit: versions
+    tuple val("${task.process}"), val('shorttracks'), eval('ShortTracks --version | sed "s/^ShortTracks//g"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,10 +26,6 @@ process SHORTTRACKS {
         ${args} \\
         --bamfile ${bam}\\
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        shorttracks: \$( ShortTracks --version | sed 's/^ShortTracks//g')
-    END_VERSIONS
     """
 
 }

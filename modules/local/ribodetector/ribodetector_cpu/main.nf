@@ -13,7 +13,7 @@ process RIBODETECTOR {
     output:
     tuple val(meta), path("*_rna_perc.txt")           , emit: output_perc
     tuple val(meta), path("rna*.fq")                  , emit: rrna_fastqs
-    path  "versions.yml"                              , emit: versions
+    tuple val("${task.process}"), val('ribodetector'), eval('ribodetector --version 2>&1 | sed "s/ribodetector //g"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -35,10 +35,6 @@ process RIBODETECTOR {
 
 		awk -v id=${prefix} -v tot=\$tot '{num++}END{print id" "num/4/tot*100}' rna1.fq > ${prefix}_rna_perc.txt
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            ribodetector: \$( ribodetector --version 2>&1 | sed 's/ribodetector //g' )
-END_VERSIONS
 
 
         """
@@ -56,10 +52,6 @@ END_VERSIONS
 	
 			awk -v id=${prefix} -v tot=\$tot '{num++}END{print id" "num/4/tot*100}' rna1.fq > ${prefix}_rna_perc.txt
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            ribodetector: \$( ribodetector --version 2>&1 | sed 's/ribodetector //g' )
-END_VERSIONS
 
 	
          """

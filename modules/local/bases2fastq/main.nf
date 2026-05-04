@@ -19,7 +19,7 @@ process BASES2FASTQ {
     tuple val(meta), path('*/Metrics.csv')                       , emit: metrics
     tuple val(meta), path('*/Unassigned_R*.fastq.gz')            , emit: unassigned_fastq
     tuple val(meta), path('*/UnassignedSequences.csv')           , emit: unassigned
-    path "versions.yml"                                          , emit: versions
+    tuple val("${task.process}"), val('bases2fastq'), eval('bases2fastq --version | sed -e "s/bases2fastq version //g"'), topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -43,10 +43,6 @@ process BASES2FASTQ {
     mv $prefix/Samples/Project_* $prefix/
     mv $prefix/Samples/Unassigned/*.fastq.gz $prefix/
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bases2fastq: \$(bases2fastq --version | sed -e "s/bases2fastq version //g")
-    END_VERSIONS
     """
 
     stub:
