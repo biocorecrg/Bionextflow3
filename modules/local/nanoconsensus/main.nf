@@ -1,6 +1,6 @@
 process NANOCONSENSUS {
     tag "${meta.id}"
-    label 'process_middle'
+    label 'process_medium'
 
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
         ? 'docker.io/biocorecrg/mop_consensus:0.1'
