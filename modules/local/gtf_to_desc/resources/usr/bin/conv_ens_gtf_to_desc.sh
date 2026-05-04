@@ -45,3 +45,10 @@ awk -v feat=$search -F"\t" '{ \
 		print dict[1]"\t"dict[2]"\t"dict[3];
 	} \
 }' | sed s/' '//g | sort | uniq  >> gene_desc.txt
+
+
+### creating gene_desc_coordinates.txt
+echo "gene_id	gene_name	gene_type	chr	start	end	strand" > gene_desc_coordinates.txt
+$catcmd $1 | awk -v feat=$search '{ if ($3==feat) { gsub(";",""); gsub("\"",""); print $10"\t"$14"\t"$12"\t"$1"\t"$4"\t"$5"\t"$7} }' | sort | uniq  >> gene_desc_coordinates.txt
+
+
