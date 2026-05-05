@@ -103,6 +103,13 @@ output:
           pattern: "batch_log2_deseq_norm*boxplot.png"
           optional: true
           ontologies: []
+  gsea:
+    - - "gsea*.{txt,cls}":
+          type: file
+          description: GSEA files (optional)
+          pattern: "*gsea"
+          optional: true
+          ontologies: []
   versions_counts_eda:
     - - ${task.process}:
           type: string

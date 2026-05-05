@@ -158,7 +158,7 @@ makeColData <- function(desc_exp, fn) {
 #READ gene desc file
 makeDesc <- function(desc_gene) {
 	desc<-read.table(file=desc_gene, sep="\t", header=F)
-	names(desc)<-c("gene.id", "gene.name", "gene.type")
+	names(desc)<-c("gene.id", "gene.name", "gene.type","chromosome", "start", "end", "strand")
 	desc <- desc[-grep("gene_id", desc$gene.id), ]
 	return(desc)
 }
@@ -609,7 +609,7 @@ y <- x[,c("Row.names","gene.name")] ## Select the gene_id and gene_name columns
 x <- data.frame(NAME=y[,1],	DESCRIPTION=y[,2])
 x <- cbind(x,sample_counts)
 
-write.table(x, "deseq2_normalized_counts_for_GSEA.txt", quote=F, col.names=T, row.names=F, sep="\t")
+write.table(x, "gsea_deseq2_normalized_counts.txt", quote=F, col.names=T, row.names=F, sep="\t")
 
 ########## write cls file for GSEA for cell condition
 
@@ -628,6 +628,6 @@ line2 <- paste("#", paste(unique_conds, collapse = " "))
 line3 <- paste(ordered_conditions, collapse = " ")
 
 # Write to file
-output_path <- "phenotype_labels.cls"
+output_path <- "gsea_phenotype_labels.cls"
 writeLines(c(line1, line2, line3), con = output_path)
 }

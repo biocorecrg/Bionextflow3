@@ -22,9 +22,12 @@ process COUNTS_EDA {
     path("_log2_deseq_norm*boxplot.png"), emit: norm_genes_boxplot, optional: true
     path("batch_vst*boxplot.png"), emit: batch_vst_genes_boxplot, optional: true
     path("batch_log2_deseq_norm*boxplot.png"), emit: batch_norm_genes_boxplot, optional: true
-    
+
+    // GSEA outputs (optional)
+    path("gsea*.{txt,cls}"), emit: gsea_files, optional: true
+
     // MultiQC-specific outputs (separate channel)
-    path("*.{png,tsv,genes,log,json}"), emit: multiqc_files, optional: true
+    path("*.{png,tsv,genes,json}"), emit: multiqc_files, optional: true
     
     // Versions (corrected syntax)
     path("versions.yml"), emit: versions, topic: versions
