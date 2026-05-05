@@ -77,7 +77,7 @@ for section_name in template_rows.keys():
     if (section_name == "header"):
       my_row  = template_rows[section_name]
       for key, value in sorted(info_4_template.items(), key=lambda x: len(x[0]), reverse=True):  
-          my_row = my_row.replace(f"#{key}", str(value))
+          my_row = re.sub(rf"#{re.escape(key)}\b", str(value), my_row)
       methods_description += "\n " + my_row
 
     elif (section_name in info_4_template):
@@ -94,14 +94,14 @@ for section_name in template_rows.keys():
       else:
        # Replace placeholders       
         for key, value in sorted(info_4_template.items(), key=lambda x: len(x[0]), reverse=True):
-          my_row = my_row.replace(f"#{key}", str(value))
+          my_row = re.sub(rf"#{re.escape(key)}\b", str(value), my_row)
           
         methods_description += "\n " + my_row
     
     elif(section_name == "tail"):
       my_row  = template_rows[section_name]
-      for key, value in citations_info.items():
-        my_row = my_row.replace(f"#{key}", str(value))
+      for key, value in sorted(citations_info.items(), key=lambda x: len(x[0]), reverse=True):
+        my_row = re.sub(rf"#{re.escape(key)}\b", str(value), my_row)
         
       #sanitize removing citations not needed
       clean_rows = [line for line in my_row.splitlines() if '#' not in line]
