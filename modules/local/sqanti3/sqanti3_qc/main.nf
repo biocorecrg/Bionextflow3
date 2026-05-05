@@ -16,8 +16,7 @@ process SQANTI3_QC {
     tuple val(meta), path("sqanti3_results/*_corrected.fasta")             , emit: corrected_fasta, optional: true
     tuple val(meta), path("sqanti3_results/*.pdf")                         , emit: plots, optional: true
     tuple val(meta), path("sqanti3_results/*.html")                        , emit: report, optional: true
-    tuple val("${task.process}"), val('sqanti3'), eval('sqanti3_qc.py --version 2>&1 | grep -oP "SQANTI3 v\K[0-9.]+" || echo "5.2.2"'), topic: versions, emit: versions
-
+tuple val("${task.process}"), val('sqanti3'), eval('/conda/miniconda3/envs/sqanti3/bin/python /opt2/sqanti3/5.5.4/SQANTI3-5.5.4/sqanti3_qc.py --version 2>&1 | grep -oE "SQANTI3 v[0-9.]+" | sed "s/SQANTI3 v//" || echo "5.5.4"'), topic: versions, emit: versions
     when:
     task.ext.when == null || task.ext.when
 
