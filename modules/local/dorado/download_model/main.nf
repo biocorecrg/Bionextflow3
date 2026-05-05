@@ -28,11 +28,7 @@ process DORADO_DOWNLOAD_MODEL {
         	echo "Trying the manual download...";
 	        dorado download --model ${down_pars} --models-directory \$PWD/dorado_models
     fi
-    echo 1
-    echo \$LD_LIBRARY_PATH
-    echo 2
-strace -e trace=openat dorado basecaller --help 2>&1 | grep -E "libgomp|libiomp"    echo 3
-   """
+    """
 
     output:
     path ("dorado_models"), type: 'dir', emit: modelfolder
