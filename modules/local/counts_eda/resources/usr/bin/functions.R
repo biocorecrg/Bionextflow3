@@ -158,7 +158,7 @@ makeColData <- function(desc_exp, fn) {
 #READ gene desc file
 makeDesc <- function(desc_gene) {
 	desc<-read.table(file=desc_gene, sep="\t", header=F)
-  if (ncol(desc <=3)) {
+  if (ncol(desc) <= 3) {  
      	names(desc)<-c("gene.id", "gene.name", "gene.type")
   } else {
      	names(desc)<-c("gene.id", "gene.name", "gene.type", "chromosome", "start", "end", "strand")
@@ -471,95 +471,103 @@ gene_expression_yaml <- function(norm_counts, genes, desc, intgroup = "condition
 
 genes_boxplot <- function(norm_counts,groups, genes_desc, genes, title, colors = c("black","#1C9BCD", "darkred","darkgreen", "#E69F00", "blue", "magenta"), condition="condition") {
 
+  genes_desc$chromosome <- NULL
+  genes_desc$start <- NULL
+  genes_desc$end <- NULL
+  genes_desc$strand <- NULL
 
   genes_desc$gene_name_norm <- normalize_gene_name(genes_desc[,2])
 
   genes_match <- genes_desc[genes_desc$gene_name_norm %in% genes, ]
 
   if (nrow(genes_match) < 1) {
-    warning(paste0("Gene names: ",genes,"NOT found in gene_desc.txt"))}
-  else {
-    warning(paste0("Gene name: ",genes_match$gene.name," found in gene_desc.txt"))
+    warning(paste0("Gene names: [", paste(genes, collapse=", "), "] NOT found in gene_desc.txt"))
+  } else {
+    warning(paste0("Gene name: [", paste(genes_match$gene.name, collapse=", "), "] found in gene_desc.txt"))
+  
+    ## selecting vst counts for specific genes
+    a <- norm_counts[rownames(norm_counts) %in% genes_match[[1]],]
 
-  ## selecting vst counts for specific genes
-  a <- norm_counts[rownames(norm_counts) %in% genes_match[[1]],]
+    ab <- merge(a, genes_match, by.x=0, by.y="gene.id")
+    rownames(ab) <- paste0(ab$gene.name,"_(",ab$Row.names,")")
+    
+    ## removing gene type, and gene name
+    ab <- subset(ab, select=-c(Row.names,gene.name,gene.type,gene_name_norm))
 
-  ab <- merge(a, genes_match, by.x=0, by.y="gene.id")
-  rownames(ab) <- paste0(ab$gene.name,"_(",ab$Row.names,")")
+    gene_cols <- rownames(ab)
 
-  ## removing gene type, and gene name
-  ab <- subset(ab, select=-c(Row.names,gene.name,gene.type,gene_name_norm))
+    d <- t(ab)
+    b <- data.frame(condition = groups, row.names = colnames(norm_counts))
+    df <- merge(d,b, by = 0)
 
-  gene_cols <- rownames(ab)
-
-  d <- t(ab)
-  b <- data.frame(condition = groups, row.names = colnames(norm_counts))
-  df <- merge(d,b, by = 0)
-
-  ## Adding a new column with a short name of the sample for point labels
-  df$sample_short <- sapply(
-    strsplit(df$Row.names, "_"),
-    function(x) paste(head(x, 2), collapse = "_")
-  )
-
-  ## Transforming table to have all the information all expression values
-  df_long <- df |>
-    pivot_longer(
-      cols = all_of(gene_cols),
-      names_to = "gene",
-      values_to = "expression"
+    ## Adding a new column with a short name of the sample for point labels
+    df$sample_short <- sapply(
+      strsplit(df$Row.names, "_"),
+      function(x) paste(head(x, 2), collapse = "_")
     )
 
-  ## Setting up frame for ggplot depending on the number of genes to plot
+    ## Transforming table to have all the information all expression values
+    df_long <- df |>
+      pivot_longer(
+        cols = all_of(gene_cols),
+        names_to = "gene",
+        values_to = "expression"
+      )
 
-  n_panels <- length(unique(df_long$gene))
+    ## Setting up frame for ggplot depending on the number of genes to plot
 
-  nrow <- 2
-  ncol <- ceiling(n_panels / nrow)
+    n_panels <- length(unique(df_long$gene))
 
-  panel_width  <- 2.2
-  panel_height <- 2
+    nrow <- 2
+    ncol <- ceiling(n_panels / nrow)
 
-  ## Creating a plot for each gene, wir one boxplot for condition
-  ggplot(df_long, aes(x = condition, y = expression, fill = condition)) +
-    geom_boxplot(width = 0.3 ,alpha = 0.20) +
-    scale_fill_manual(values = colors ) +
-    geom_jitter( shape = 21,              # supports fill + border
-                 color = "black",         # border
-                 alpha = 0.9,             # fill transparency
-                 size = 2,
-                 width = 0.2) +
-    geom_text_repel(
-      aes(label = sample_short),
-      size = 2,
-      max.overlaps = 20,
-      box.padding = 0.3,
-      point.padding = 0.2,
-      segment.size = 0.2,
-      min.segment.length = 0,
-      force = 2,
-      show.legend = FALSE
-    ) +
-    facet_wrap(~ gene, nrow = 2, scales = "free_y", labeller = label_wrap_gen(width = 25)) +
-    labs(
-      x = "Group",
-      y = title,
-      fill = "Group"
-    ) +
-    theme_bw() +
-    theme(
-      strip.background = element_rect(fill = "grey90"),
-      strip.text = element_text(face = "bold", size = 5),
-      plot.margin = margin(10, 30, 10, 10)
-    ) +
-    coord_cartesian(clip = "off")
-  ggsave(paste(title,"genes_boxplot.png",sep="_"), 
-         width = 10,
-         height = 8,
-         units = "in",
-         dpi = 300)
-  }
+    panel_width  <- 2.2
+    panel_height <- 2
+
+    print(df_long)
+
+    ## Creating a plot for each gene, wir one boxplot for condition
+    ggplot(df_long, aes(x = condition, y = expression, fill = condition)) +
+      geom_boxplot(width = 0.3 ,alpha = 0.20) +
+      scale_fill_manual(values = colors ) +
+      geom_jitter( shape = 21,              # supports fill + border
+                  color = "black",         # border
+                  alpha = 0.9,             # fill transparency
+                  size = 2,
+                  width = 0.2) +
+      geom_text_repel(
+        aes(label = sample_short),
+        size = 2,
+        max.overlaps = 20,
+        box.padding = 0.3,
+        point.padding = 0.2,
+        segment.size = 0.2,
+        min.segment.length = 0,
+        force = 2,
+        show.legend = FALSE
+      ) +
+      facet_wrap(~ gene, nrow = 2, scales = "free_y", labeller = label_wrap_gen(width = 25)) +
+      labs(
+        x = "Group",
+        y = title,
+        fill = "Group"
+      ) +
+      theme_bw() +
+      theme(
+        strip.background = element_rect(fill = "grey90"),
+        strip.text = element_text(face = "bold", size = 5),
+        plot.margin = margin(10, 30, 10, 10)
+      ) +
+      coord_cartesian(clip = "off")
+    ggsave(paste(title,"genes_boxplot.png",sep="_"), 
+          width = 10,
+          height = 8,
+          units = "in",
+          dpi = 300)
+    }
 }
+
+
 
 create_pca_data <- function(vsd, condition, pcnum, colors) {
 
