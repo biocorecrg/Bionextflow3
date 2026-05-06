@@ -158,7 +158,11 @@ makeColData <- function(desc_exp, fn) {
 #READ gene desc file
 makeDesc <- function(desc_gene) {
 	desc<-read.table(file=desc_gene, sep="\t", header=F)
-	names(desc)<-c("gene.id", "gene.name", "gene.type","chromosome", "start", "end", "strand")
+  if (ncol(desc <=3)) {
+     	names(desc)<-c("gene.id", "gene.name", "gene.type")
+  } else {
+     	names(desc)<-c("gene.id", "gene.name", "gene.type", "chromosome", "start", "end", "strand")
+  }
 	desc <- desc[-grep("gene_id", desc$gene.id), ]
 	return(desc)
 }

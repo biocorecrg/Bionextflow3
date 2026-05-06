@@ -33,4 +33,7 @@ process COUNTS_EDA {
 
     // MultiQC-specific outputs (separate channel)
     path ("*.{png,tsv,genes,json}"), emit: multiqc_files, optional: true
+
+    //Versions 
+    tuple val("${task.process}"), val("deseq2"), eval("Rscript -e 'cat(as.character(packageVersion(\"DESeq2\")))'"), topic: versions, emit: versions
 }
