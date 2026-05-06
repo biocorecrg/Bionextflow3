@@ -1,12 +1,7 @@
 #!/usr/local/bin/Rscript --vanilla
 
 ##Import accessory functions:
-script_path <- Sys.which("Accessory_functions_consensusNanoMod.R")
-if (nzchar(script_path)) {
-  source(script_path)
-} else {
-  stop("Script not found in PATH")
-}
+source("Accessory_functions_consensusNanoMod.R")
 
 ###Script to merge results from NanoMod and generate a consensus putative modified positions list:
 
@@ -48,6 +43,14 @@ parser$add_argument("--coverage", default=1, type="integer",
 parser$add_argument("--bed", help="Path to RNA modification annotation (*.bed)")
 parser$add_argument("--ablines", action='store_true', help="Plot reported modified sites from the bed file.")
 
+#bedRmod format metadata:
+parser$add_argument("--organism", default="", type="character", help="Organism name for bedRmod header")
+parser$add_argument("--assembly", default="", type="character", help="Genome assembly for bedRmod header")
+parser$add_argument("--annotation_source", default="", type="character", help="Annotation source for bedRmod header")
+parser$add_argument("--annotation_version", default="", type="character", help="Annotation version for bedRmod header")
+parser$add_argument("--basecalling", default="", type="character", help="Basecalling method for bedRmod header")
+parser$add_argument("--bioinformatics_workflow", default="", type="character", help="Bioinformatics workflow for bedRmod header")
+parser$add_argument("--experiment", default="", type="character", help="Experiment description for bedRmod header")
 
 #EPINANO:
 parser$add_argument("-Epi_Sample", nargs=1,  default="", type="character", help="Path to Epinano features sample results.")
@@ -121,6 +124,23 @@ for (i in seq(1,length(files_to_parse))){
 list_plotting <- list(epinano_data[[1]], f5C_data[[1]], baseQ_data[[1]], nanoRMS_SI_data[[1]], nanoRMS_DT_data[[1]], nanoRMS_SD_data[[1]])
 list_significant <- list(epinano_data[[2]], f5C_data[[2]], baseQ_data[[2]], nanoRMS_SI_data[[2]], nanoRMS_DT_data[[2]], nanoRMS_SD_data[[2]])
 
+#Extract first available coverage data (epinano, baseQ, or nanoRMS - f5C doesn't have coverage)
+coverage_data <- NULL
+coverage_sources <- list(
+  if (length(epinano_data) >= 3) epinano_data[[3]] else NULL,
+  if (length(baseQ_data) >= 3) baseQ_data[[3]] else NULL,
+  if (length(nanoRMS_SI_data) >= 3) nanoRMS_SI_data[[3]] else NULL,
+  if (length(nanoRMS_DT_data) >= 3) nanoRMS_DT_data[[3]] else NULL,
+  if (length(nanoRMS_SD_data) >= 3) nanoRMS_SD_data[[3]] else NULL
+)
+
+for (cov in coverage_sources) {
+  if (!is.null(cov) && nrow(cov) > 0) {
+    coverage_data <- cov
+    break
+  }
+}
+
 #If there is annotation, process it:
 if (length(args$bed)!=0){
   annotation <- process_bed(args$bed, args$Chr)
@@ -134,4 +154,4 @@ barplot_4soft <- barplot_plotting(list_plotting, list_significant, args$Output_n
 
 ##Analysis of SIGNIFICANT POSITIONS across methods:
 write('Step 3: Overlapping analysis', file = paste("NanoConsensus_", args$Output_name,".log", sep=""), append = T)
-analysis_significant_positions(list_significant, list_plotting, args$Fasta_file, args$Output_name,  args$Initial_position, args$Final_position, args$MZS_thr, args$NC_thr, args$model_score, barplot_4soft, annotation, args$ablines, args$Chr)
+analysis_significant_positions(list_significant, list_plotting, args$Fasta_file, args$Output_name,  args$Initial_position, args$Final_position, args$MZS_thr, args$NC_thr, args$model_score, barplot_4soft, annotation, args$ablines, args$Chr, coverage_data, args$organism, args$assembly, args$annotation_source, args$annotation_version, args$basecalling, args$bioinformatics_workflow, args$experiment)

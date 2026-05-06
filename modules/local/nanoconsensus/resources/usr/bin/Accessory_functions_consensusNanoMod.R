@@ -29,6 +29,10 @@ epinano_processing <- function(sample_file, ivt_file, initial_position, final_po
   sample <- subset(sample, pos<=final_position)
   sample$reference <- paste(sample$X.Ref, sample$pos, sep='_')
   sample$Difference <- as.numeric(sample$mis)+as.numeric(sample$ins)+as.numeric(sample$del)
+
+  #Extract coverage information before column filtering
+  sample_coverage <- data.frame(Position = sample$pos, Coverage = sample$cov, stringsAsFactors = FALSE)
+
   sample <- sample[,c(1,2,14,13)]
   colnames(sample) <- c('Reference', 'Position', 'Difference_sample', 'Merge')
 
@@ -38,10 +42,18 @@ epinano_processing <- function(sample_file, ivt_file, initial_position, final_po
   ivt <- subset(ivt, pos<=final_position)
   ivt$reference <- paste(ivt$X.Ref, ivt$pos, sep='_')
   ivt$Difference <- as.numeric(ivt$mis)+as.numeric(ivt$ins)+as.numeric(ivt$del)
+
+  #Extract coverage information from ivt before column filtering
+  ivt_coverage <- data.frame(Position = ivt$pos, Coverage = ivt$cov, stringsAsFactors = FALSE)
+
   ivt <- ivt[,c(1,2,14,13)]
   colnames(ivt) <- c('Reference', 'Position', 'Difference_IVT', 'Merge')
 
   if (nrow(sample)!=0 && nrow(ivt)!=0) {
+    #Combine coverage from sample and ivt by calculating median per position
+    combined_coverage <- rbind(sample_coverage, ivt_coverage)
+    coverage_data <- aggregate(Coverage ~ Position, data = combined_coverage, FUN = median, na.rm = TRUE)
+
     #Join both dataframes and clean unecessary columns:
     plotting_positions <- join(sample, ivt, by="Merge")
     plotting_positions <- subset(plotting_positions, Reference == chr)
@@ -74,12 +86,16 @@ epinano_processing <- function(sample_file, ivt_file, initial_position, final_po
     #Extract significant positions based on the specific threshold:
     significant_positions <- subset(plotting_positions, Modified_ZScore>MZS_thr)
 
+    #Filter coverage to match plotting_positions
+    coverage_data <- coverage_data[coverage_data$Position %in% plotting_positions$Position, ]
+
   } else {
     plotting_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
     significant_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
+    coverage_data <- data.frame(Position=integer(), Coverage=integer(), stringsAsFactors = FALSE)
   }
 
-  return(list(plotting_positions,significant_positions))
+  return(list(plotting_positions, significant_positions, coverage_data))
 }
 
 f5C_processing <- function(sample_file, ivt_file, initial_position, final_position, MZS_thr, chr, exclude_SNP, Coverage) {
@@ -179,6 +195,9 @@ bedmethyl_processing <- function(sample_file, initial_position, final_position, 
     merged_sample <- subset(merged_sample, Position <= final_position)
     merged_sample$Reference <- paste(merged_sample$Chr, merged_sample$Position, sep='_')
 
+    #Extract coverage information before column filtering
+    coverage_data <- data.frame(Position = merged_sample$Position, Coverage = merged_sample$Coverage, stringsAsFactors = FALSE)
+
     #Exclude SNPs and 10 positions before and after (21mer):
     if (length(exclude_SNP)!=0) {
       excluded_positions <- c()
@@ -198,7 +217,7 @@ bedmethyl_processing <- function(sample_file, initial_position, final_position, 
     merged_sample$Score <- merged_sample$KS/threshold_position
     #sample$Modified_ZScore <- (sample$pvalue_KS-median(sample$pvalue_KS, na.rm = TRUE))/sd(sample$pvalue_KS, na.rm = TRUE)
     merged_sample$Modified_ZScore <- (merged_sample$Score-median(merged_sample$Score, na.rm = TRUE))/sd(merged_sample$Score, na.rm = TRUE)
-    
+
     #Due to the inputted values, transform all Zscores = 0 into NA not to affect NanoConsensus score calculation:
     merged_sample$Modified_ZScore[merged_sample$Modified_ZScore == 0 & merged_sample$Score == 1] <- NA
 
@@ -208,12 +227,16 @@ bedmethyl_processing <- function(sample_file, initial_position, final_position, 
     #Extract significant positions:
     significant_positions <- subset(plotting_positions, Modified_ZScore>MZS_thr)
 
+    #Filter coverage to match plotting_positions
+    coverage_data <- coverage_data[coverage_data$Position %in% plotting_positions$Position, ]
+
   } else {
     plotting_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
     significant_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
+    coverage_data <- data.frame(Position=integer(), Coverage=integer(), stringsAsFactors = FALSE)
   }
 
-  return(list(plotting_positions, significant_positions))
+  return(list(plotting_positions, significant_positions, coverage_data))
 }
 
 process_bed <- function(bed_file, chr) {
@@ -669,7 +692,7 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
       #Calculate NanoConsensus score:
       write(paste("Step 4: Calculating NanoConsensus scores with model: ", model_score, sep = ""), file = paste("NanoConsensus_", args$Output_name,".log", sep=""), append = T)
       positions_df$Merged_Score <- calcNanoConsensusScore(data, model_score)
-
+      
       threshold <- Consensus_score * median(positions_df$Merged_Score, na.rm = TRUE)
       print(threshold)
       positions_NanoConsensus <- subset(positions_df, Merged_Score >= threshold)
@@ -795,13 +818,184 @@ nearest_distance_mod <- function(all_ranges, annotation) {
   return(all_ranges)
 }
 
-kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotation, sup_kmers, color_beds, methods_name) {
+create_bedRmod_headers <- function(organism = "", modification_names = "", assembly = "",
+                                    annotation_source = "", annotation_version = "",
+                                    basecalling = "", bioinformatics_workflow = "", experiment = "") {
+  #Check if mandatory fields are empty
+  missing_fields <- c()
+  if (organism == "") missing_fields <- c(missing_fields, "organism")
+  if (assembly == "") missing_fields <- c(missing_fields, "assembly")
+  if (annotation_source == "") missing_fields <- c(missing_fields, "annotation_source")
+  if (annotation_version == "") missing_fields <- c(missing_fields, "annotation_version")
+
+  if (length(missing_fields) > 0) {
+    missing_str <- paste(missing_fields, collapse = ", ")
+    print(paste("Mandatory files required by bedRmod format are left blank as the user didn't provide the information. Missing fields: ", missing_str, sep = ""))
+  }
+
+  c(
+    "#fileformat=bedRModv2",
+    paste0("#organism=", organism),
+    "#modification_type=RNA",
+    paste0("#modification_names=", modification_names),
+    paste0("#assembly=", assembly),
+    paste0("#annotation_source=", annotation_source),
+    paste0("#annotation_version=", annotation_version),
+    "#sequencing_platform=ONT",
+    paste0("#basecalling=", basecalling),
+    paste0("#bioinformatics_workflow=", bioinformatics_workflow),
+    paste0("#experiment=", experiment),
+    "#external_source=",
+    "#chrom\tchromStart\tchromEnd\tname\tscore\tstrand\tthickStart\tthickEnd\titemRgb\tcoverage\tfrequency"
+  )
+}
+
+write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annotation = NULL, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "") {
+  bedRmod_rows <- list()
+  collected_mod_names <- c()
+
+  # Process all ranges from all_ranges
+  for (i in 1:nrow(all_ranges)) {
+    range_chr <- all_ranges$Chr[i]
+    range_start <- all_ranges$Start[i]
+    range_end <- all_ranges$End[i]
+
+    # Check if there's an overlapping annotation for this range
+    overlapping_annotation <- NULL
+    if (!is.null(annotation) && nrow(annotation) > 0) {
+      overlapping_annotation <- annotation[annotation[,1] == range_chr &
+                                          annotation[,3] >= range_start &
+                                          annotation[,3] <= range_end, ]
+    }
+
+    if (!is.null(overlapping_annotation) && nrow(overlapping_annotation) > 0) {
+      # Case: Range overlaps with annotation(s)
+      # Process each overlapping annotation separately
+      for (ann_row in 1:nrow(overlapping_annotation)) {
+        ann_pos <- overlapping_annotation[ann_row, 3]
+        ann_mod_name <- overlapping_annotation[ann_row, 4]
+        collected_mod_names <- c(collected_mod_names, ann_mod_name)
+
+        # Get max score around annotation position
+        if (!is.null(bed_data)) {
+          three_mer <- bed_data[bed_data$Chr == range_chr &
+                               bed_data$Start >= (ann_pos - 3) &
+                               bed_data$Start <= (ann_pos - 1), ]
+          max_score <- if (nrow(three_mer) > 0) max(three_mer$Merged_Score, na.rm = TRUE) else NA
+        } else {
+          max_score <- NA
+        }
+
+        # Format score with 3 decimals
+        score_formatted <- ifelse(!is.na(max_score), sprintf("%.3f", max_score), "")
+
+        # Look up coverage for this position
+        cov_value <- ""
+        if (!is.null(coverage_data) && nrow(coverage_data) > 0) {
+          cov_match <- coverage_data[coverage_data$Position == ann_pos, ]
+          if (nrow(cov_match) > 0) {
+            cov_value <- as.integer(cov_match$Coverage[1])
+          }
+        }
+
+        bedRmod_rows[[length(bedRmod_rows) + 1]] <- data.frame(
+          Chr = range_chr,
+          Start = ann_pos,
+          End = ann_pos + 1,
+          Name = ann_mod_name,
+          Score = score_formatted,
+          Strand = "",
+          ThickStart = range_start,
+          ThickEnd = range_end,
+          ItemRgb = "0,0,0",
+          Coverage = cov_value,
+          Frequency = "",
+          stringsAsFactors = FALSE
+        )
+      }
+    } else {
+      # Case: Range doesn't overlap with annotation (or no annotation)
+      collected_mod_names <- c(collected_mod_names, "xX")
+
+      # Find position within kmer with highest Merged_Score
+      if (!is.null(bed_data)) {
+        kmer_data <- bed_data[bed_data$Chr == range_chr &
+                             bed_data$Start >= range_start &
+                             bed_data$End <= range_end, ]
+
+        if (nrow(kmer_data) > 0) {
+          max_idx <- which.max(kmer_data$Merged_Score)
+          max_score <- kmer_data$Merged_Score[max_idx]
+          central_pos <- kmer_data$Start[max_idx] + 2
+          max_pos_start <- central_pos
+          max_pos_end <- central_pos + 1
+        } else {
+          max_score <- NA
+          max_pos_start <- range_start
+          max_pos_end <- range_end
+        }
+      } else {
+        max_score <- NA
+        max_pos_start <- range_start
+        max_pos_end <- range_end
+      }
+
+      # Format score with 3 decimals
+      score_formatted <- ifelse(!is.na(max_score), sprintf("%.3f", max_score), "")
+
+      # Look up coverage for this position
+      cov_value <- ""
+      if (!is.null(coverage_data) && nrow(coverage_data) > 0) {
+        cov_match <- coverage_data[coverage_data$Position == max_pos_start, ]
+        if (nrow(cov_match) > 0) {
+          cov_value <- as.integer(cov_match$Coverage[1])
+        }
+      }
+
+      bedRmod_rows[[length(bedRmod_rows) + 1]] <- data.frame(
+        Chr = range_chr,
+        Start = max_pos_start,
+        End = max_pos_end,
+        Name = "xX",
+        Score = score_formatted,
+        Strand = "",
+        ThickStart = range_start,
+        ThickEnd = range_end,
+        ItemRgb = "0,0,0",
+        Coverage = cov_value,
+        Frequency = "",
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+
+  # Combine all rows into single dataframe
+  if (length(bedRmod_rows) > 0) {
+    bedRmod_data <- do.call(rbind, bedRmod_rows)
+    rownames(bedRmod_data) <- NULL
+  } else {
+    bedRmod_data <- data.frame()
+  }
+
+  # Generate and write bedRmod headers with collected modification names
+  modification_names <- paste(unique(collected_mod_names), collapse = ",")
+  headers <- create_bedRmod_headers(organism = organism, modification_names = modification_names, assembly = assembly, annotation_source = annotation_source, annotation_version = annotation_version, basecalling = basecalling, bioinformatics_workflow = bioinformatics_workflow, experiment = experiment)
+  writeLines(headers, con = output_name)
+
+  # Append data to file only if there are rows
+  if (nrow(bedRmod_data) > 0) {
+    write.table(bedRmod_data, file = output_name, sep = '\t', row.names = FALSE,
+                col.names = FALSE, quote = FALSE, append = TRUE)
+  }
+}
+
+kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotation, sup_kmers, color_beds, methods_name, bedRmod = FALSE, bed_data = NULL, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "") {
   print('Kmer analysis')
   kmer_data <- extract_kmers(all_ranges, fasta_file)
   all_ranges$Kmer <- kmer_data[[1]]
   all_ranges$RRACH_motif <- kmer_data[[2]]
   all_ranges <- all_ranges[order(all_ranges$Start, decreasing = FALSE),]
-
+  
   #If needed, generate track headed:
   if (tracks){
     bedgraph_tracks(all_ranges[,c(1,2,3,9,10,11,12,13,19)], output_name, c(color_beds,"190,30,45"), c(methods_name, 'NanoConsensus'))
@@ -811,12 +1005,16 @@ kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotati
   if (sup_kmers && length(annotation)!=0){
     all_ranges <- nearest_distance_mod(all_ranges, annotation)
   }
-
-  #Merging data per kmer:
-  write.table(all_ranges, file = output_name, sep = '\t', row.names = FALSE, quote = FALSE)
+  
+  #Output formatting:
+  if (bedRmod) {
+    write_bedRmod_output(all_ranges, output_name, bed_data, annotation, coverage_data, organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment)
+  } else {
+    write.table(all_ranges, file = output_name, sep = '\t', row.names = FALSE, quote = FALSE)
+  }
 }
 
-analysis_significant_positions <- function (list_significant, list_plotting, fasta_file, output_name, initial_position, final_position, MZS_thr, Consensus_score, model_score, barplot_4soft, annotation, ablines, chr) {
+analysis_significant_positions <- function (list_significant, list_plotting, fasta_file, output_name, initial_position, final_position, MZS_thr, Consensus_score, model_score, barplot_4soft, annotation, ablines, chr, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "") {
   epinano <- list_significant[[1]]
   f5C <- list_significant[[2]]
   baseQ <- list_significant[[3]]
@@ -950,7 +1148,7 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
 
     if(extract_length_from_GRobjects(filtered_supported_kmers)!=0){
       all_ranges <- extracting_modified_ZScores(filtered_supported_kmers, MZS_thr, TRUE, Consensus_score, model_score)
-      kmer_analysis(all_ranges[[1]], fasta_file, paste(output_name,'Supported_kmers.txt', sep='_'), FALSE, annotation, TRUE, color_beds, methods_name)
+      kmer_analysis(all_ranges[[1]], fasta_file, paste(output_name,'Supported_kmers.bedrmod', sep='_'), FALSE, annotation, TRUE, color_beds, methods_name, bedRmod = TRUE, bed_data = all_kmers[[1]], coverage_data = coverage_data, organism = organism, assembly = assembly, annotation_source = annotation_source, annotation_version = annotation_version, basecalling = basecalling, bioinformatics_workflow = bioinformatics_workflow, experiment = experiment)
 
       #Plot NanoConsensus score across transcripts:
       Nanoconsensus_plotting(all_kmers[[1]], all_ranges[[1]], output_name, barplot_4soft, initial_position, final_position, annotation, ablines)

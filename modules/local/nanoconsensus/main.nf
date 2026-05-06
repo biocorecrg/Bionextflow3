@@ -31,5 +31,5 @@ process NANOCONSENSUS {
 
     output:
     tuple val(meta), path("*"), emit: output
-    tuple val("${task.process}"), val("nanoconsensus"), eval("echo 1.0"), topic: versions
+    tuple val("${task.process}"), val("nanoconsensus"), eval("echo 2.0"), topic: versions
 }
