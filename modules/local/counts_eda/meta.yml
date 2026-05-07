@@ -20,6 +20,28 @@ tools:
       licence:
         - "LGPL (>= 3)"
       identifier: biocmanager:DESeq2
+  - ggplot2:
+      description: |
+        A system for 'declaratively' creating graphics, based on "The Grammar of Graphics".
+        You provide the data, tell ggplot2 how to map variables to aesthetics, what graphical primitives to use,
+        and it takes care of the details.
+      homepage: https://ggplot2.tidyverse.org/
+      documentation: https://ggplot2.tidyverse.org/reference/index.html
+      doi: ""
+      citation: |
+        H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+  - r:
+      description: |
+        R is a free software environment for statistical computing and graphics.
+      homepage: https://www.r-project.org/
+      documentation: https://cran.r-project.org/doc/manuals/r-release/
+      doi: ""
+      citation: |
+        R Core Team (2020). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. https://www.R-project.org/
+      licence:
+        - "GPL-2+"
+      identifier: cran:R
+
 input:
   - - meta:
         type: map

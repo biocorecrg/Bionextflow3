@@ -58,7 +58,7 @@ async function addCitationsToYaml(
       if (!section || typeof section !== "object") return;
       for (const key of Object.keys(section)) {
         const entry = section[key];
-        if (entry && entry.doi && entry.doi.trim()) {
+        if (entry && entry.doi && entry.doi.trim() && !(entry.citation && entry.citation.trim())) {
           try {
             const citeObj = await Cite.async(entry.doi);
             let citation;

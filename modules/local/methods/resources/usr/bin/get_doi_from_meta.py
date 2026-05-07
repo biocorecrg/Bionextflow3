@@ -39,11 +39,12 @@ def get_tool_info_from_meta(meta_yaml):
         with open(meta_yaml, "r") as file:
             meta = yaml.safe_load(file)
             if "tools" in meta:
-                tools = meta["tools"][0]
-                for k, v in tools.items():
-                    doi = v.get("doi", "")
-                    homepage = v.get("homepage", "")
-                    tool_list.append({k: {"doi": doi, "homepage": homepage}})
+                for tools in meta["tools"]:
+                    for k, v in tools.items():
+                        doi = v.get("doi", "")
+                        homepage = v.get("homepage", "")
+                        citation = v.get("citation", "")
+                        tool_list.append({k: {"doi": doi, "homepage": homepage, "citation": citation}})
 
         return tool_list
     except yaml.scanner.ScannerError:

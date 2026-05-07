@@ -11,7 +11,7 @@ process COUNTS_EDA {
 
     script:
     """
-    multiqc_pca.R -type ${wtype} -dgenes ${dgenes} -desc ${desc} ${extrapars}
+    counts_eda.R -type ${wtype} -dgenes ${dgenes} -desc ${desc} ${extrapars}
      """
 
     output:
@@ -35,5 +35,8 @@ process COUNTS_EDA {
     path ("*.{png,tsv,genes,json}"), emit: multiqc_files, optional: true
 
     //Versions 
-    tuple val("${task.process}"), val("deseq2"), eval("Rscript -e 'cat(as.character(packageVersion(\"DESeq2\")))'"), topic: versions, emit: versions
+    tuple val("${task.process}"), val("deseq2"), eval("Rscript -e 'cat(as.character(packageVersion(\"DESeq2\")))'"), topic: versions
+    tuple val("${task.process}"), val("ggplot2"), eval("Rscript -e 'cat(as.character(packageVersion(\"ggplot2\")))'"), topic: versions
+    tuple val("${task.process}"), val("r"), eval("R --version | head -1 | sed 's/R version //;s/ (.*//'"), topic: versions
+
 }

@@ -38,10 +38,11 @@ if reporting_info is None:
 
 for tool in all_tools_info.keys():
   versions_info[tool] =  all_tools_info[tool]["version"]
-  if ( "citation" in all_tools_info[tool]):
-    citations_info[tool] = all_tools_info[tool]["citation"]
+  citation = all_tools_info[tool].get("citation", "")
+  if citation and str(citation).strip():
+    citations_info[tool] = citation
   else:
-    citations_info[tool] = all_tools_info[tool]["homepage"]
+    citations_info[tool] = all_tools_info[tool].get("homepage", "")
 
 info_4_template = versions_info | reporting_info
 
