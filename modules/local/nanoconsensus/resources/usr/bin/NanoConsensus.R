@@ -1,7 +1,7 @@
 #!/usr/local/bin/Rscript --vanilla
 
 ##Import accessory functions:
-source("Accessory_functions_consensusNanoMod.R")
+source(Sys.which("Accessory_functions_consensusNanoMod.R"))
 
 ###Script to merge results from NanoMod and generate a consensus putative modified positions list:
 
@@ -42,6 +42,7 @@ parser$add_argument("--coverage", default=1, type="integer",
                     help="Minimum coverage per position to be included in the analysis [default %(default)]")
 parser$add_argument("--bed", help="Path to RNA modification annotation (*.bed)")
 parser$add_argument("--ablines", action='store_true', help="Plot reported modified sites from the bed file.")
+parser$add_argument("--extended_outputs", action='store_true', help="Generate extended outputs (kmer_tracks and Raw_kmers file).")
 
 #bedRmod format metadata:
 parser$add_argument("--organism", default="", type="character", help="Organism name for bedRmod header")
@@ -154,4 +155,4 @@ barplot_4soft <- barplot_plotting(list_plotting, list_significant, args$Output_n
 
 ##Analysis of SIGNIFICANT POSITIONS across methods:
 write('Step 3: Overlapping analysis', file = paste("NanoConsensus_", args$Output_name,".log", sep=""), append = T)
-analysis_significant_positions(list_significant, list_plotting, args$Fasta_file, args$Output_name,  args$Initial_position, args$Final_position, args$MZS_thr, args$NC_thr, args$model_score, barplot_4soft, annotation, args$ablines, args$Chr, coverage_data, args$organism, args$assembly, args$annotation_source, args$annotation_version, args$basecalling, args$bioinformatics_workflow, args$experiment)
+analysis_significant_positions(list_significant, list_plotting, args$Fasta_file, paste(args$Output_name, args$Chr, sep='_'),  args$Initial_position, args$Final_position, args$MZS_thr, args$NC_thr, args$model_score, barplot_4soft, annotation, args$ablines, args$Chr, coverage_data, args$organism, args$assembly, args$annotation_source, args$annotation_version, args$basecalling, args$bioinformatics_workflow, args$experiment, args$extended_outputs)

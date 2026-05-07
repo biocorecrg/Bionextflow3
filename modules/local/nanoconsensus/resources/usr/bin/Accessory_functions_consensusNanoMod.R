@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 ###Script which contains multiple R functions used to generate consensus putative modified positions from NanoMod results.
 
 #Read gzipped or flat files
@@ -706,34 +708,53 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
   return(list(positions_df, positions_NanoConsensus))
 }
 
-bedgraph_tracks <- function (data, output_name, color, methods) {
+bedRmod_tracks <- function (data, output_name, color, methods, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "") {
 
+  #Check if output directory exists - if not, create it:
+  if (!dir.exists("./BedRmod_tracks")){
+    dir.create("BedRmod_tracks", showWarnings = FALSE)
+  }
+  
   for (i in 4:(ncol(data))){
-    #Check if output directory exists - if not, create it:
-    if (!dir.exists("./Bedgraph_tracks")){
-      dir.create("Bedgraph_tracks", showWarnings = FALSE)
-    }
-
     #Sliced dataset:
-    subset_data <- data.frame(data[,c(1,2,3,i)])
+    subset_data <- data.frame(Chr = data[,1], Start = data[,2], End = data[,3], Score = as.numeric(data[,i]))
 
-    #From kmers to individual positions:
-    subset_data$Start <- subset_data$Start+1
-    subset_data$End <- subset_data$End-2
+    #From kmers to individual positions - center on single position:
+    subset_data$Start <- subset_data$Start + 2
+    subset_data$End <- subset_data$Start + 1
 
-    #Removing NAs - otherwise, track wont be loaded into IGV:
-    subset_data[is.na(subset_data)] <- 0
+    #Replace NAs with 0:
+    subset_data$Score[is.na(subset_data$Score)] <- 0
 
-    #Prepare the header:
-    header_track <- paste(" \'1i track type=bedGraph name=", methods[i-3]," autoScale=on visibility=full color=",color[i-3]," altColor=",color[i-3]," priority=20 graphType=bar\'", sep="")
+    #Format data for bedRmod:
+    bedRmod_data <- data.frame(
+      Chr = subset_data$Chr,
+      Start = subset_data$Start,
+      End = subset_data$End,
+      Name = 'xX',
+      Score = sprintf("%.3f", subset_data$Score),
+      Strand = "",
+      ThickStart = data[,2],
+      ThickEnd = data[,3],
+      ItemRgb = "0,0,0",
+      Coverage = "",
+      Frequency = "",
+      stringsAsFactors = FALSE
+    )
 
-    #Generate bedgraph tracks:
-    write.table(subset_data, file = paste("Bedgraph_tracks/", methods[i-3], "-", str_split_fixed(output_name,"_Raw_kmers.txt",2)[1],'.bedgraph', sep=''),
-                  sep = '\t', row.names = FALSE, col.names = FALSE, quote = FALSE)
+    #Generate bedRmod headers:
+    headers <- create_bedRmod_headers(organism = organism, modification_names = 'xX', assembly = assembly,
+                                      annotation_source = annotation_source, annotation_version = annotation_version,
+                                      basecalling = basecalling, bioinformatics_workflow = methods[i-3],
+                                      experiment = experiment)
 
-    #Include the header to be able to load the track into IGV:
-    command=paste("sed -i", header_track, paste(" ./Bedgraph_tracks/", methods[i-3], "-", str_split_fixed(output_name,"_Raw_kmers.txt",2)[1],".bedgraph", sep=''), sep="")
-    try(system(command))
+    #Generate bedRmod output file:
+    output_file <- paste("BedRmod_tracks/", methods[i-3], "-", str_split_fixed(output_name,"_Raw_kmers.txt",2)[1],'.bedrmod', sep='')
+    writeLines(headers, con = output_file)
+
+    #Append data to file:
+    write.table(bedRmod_data, file = output_file, sep = '\t', row.names = FALSE,
+                col.names = FALSE, quote = FALSE, append = TRUE)
   }
 }
 
@@ -989,16 +1010,16 @@ write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annot
   }
 }
 
-kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotation, sup_kmers, color_beds, methods_name, bedRmod = FALSE, bed_data = NULL, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "") {
+kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotation, sup_kmers, color_beds, methods_name, bedRmod = FALSE, bed_data = NULL, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", extended_outputs = NULL) {
   print('Kmer analysis')
   kmer_data <- extract_kmers(all_ranges, fasta_file)
   all_ranges$Kmer <- kmer_data[[1]]
   all_ranges$RRACH_motif <- kmer_data[[2]]
   all_ranges <- all_ranges[order(all_ranges$Start, decreasing = FALSE),]
   
-  #If needed, generate track headed:
+  #If needed, generate bedRmod tracks:
   if (tracks){
-    bedgraph_tracks(all_ranges[,c(1,2,3,9,10,11,12,13,19)], output_name, c(color_beds,"190,30,45"), c(methods_name, 'NanoConsensus'))
+    bedRmod_tracks(all_ranges[,c(1,2,3,10,11,12,13,14,15,22)], output_name, c(color_beds,"190,30,45"), c(methods_name, 'NanoConsensus'), organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment)
   }
 
   #If annotation file is provided, calculate distance to the nearest + annotated site:
@@ -1009,12 +1030,13 @@ kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotati
   #Output formatting:
   if (bedRmod) {
     write_bedRmod_output(all_ranges, output_name, bed_data, annotation, coverage_data, organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment)
-  } else {
+  } else if (extended_outputs) {
     write.table(all_ranges, file = output_name, sep = '\t', row.names = FALSE, quote = FALSE)
   }
+
 }
 
-analysis_significant_positions <- function (list_significant, list_plotting, fasta_file, output_name, initial_position, final_position, MZS_thr, Consensus_score, model_score, barplot_4soft, annotation, ablines, chr, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "") {
+analysis_significant_positions <- function (list_significant, list_plotting, fasta_file, output_name, initial_position, final_position, MZS_thr, Consensus_score, model_score, barplot_4soft, annotation, ablines, chr, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", extended_outputs = FALSE) {
   epinano <- list_significant[[1]]
   f5C <- list_significant[[2]]
   baseQ <- list_significant[[3]]
@@ -1088,7 +1110,9 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
   
   ##Generate bed files:
   color_beds <- c("0,166,81", "102,45,145", "0,174,239","242,101,34", "196,130,64", "171,122,98")
-  bed_tracks(GRanges_list, output_name, color_beds, methods_name)
+  if (extended_outputs) {
+    bed_tracks(GRanges_list, output_name, color_beds, methods_name)
+  }
 
   ##Overlappings of supported kmers:
   write('Kmers supported by multiple softwares:', file = paste("NanoConsensus_", args$Output_name,".log", sep=""), append = T)
@@ -1140,7 +1164,7 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
   #Analysis of all kmers across the chromosome:
   all_kmers_raw <- GRanges(seqnames = chr, ranges = IRanges(initial_position:(final_position-4), end = (initial_position+4):final_position))
   all_kmers <- extracting_modified_ZScores(all_kmers_raw, MZS_thr, FALSE, Consensus_score, model_score)
-  kmer_analysis(all_kmers[[1]], fasta_file, paste(output_name,'Raw_kmers.txt', sep='_'), TRUE, annotation, FALSE, color_beds, methods_name)
+  kmer_analysis(all_kmers[[1]], fasta_file, paste(output_name,'Raw_kmers.txt', sep='_'), TRUE, annotation, FALSE, color_beds, methods_name, extended_outputs = extended_outputs)
 
   #Analyse the supported kmers - only if they are present:
   if (is.null(supported_kmers)==FALSE) {
