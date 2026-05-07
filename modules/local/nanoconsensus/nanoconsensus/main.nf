@@ -1,6 +1,6 @@
 process NANOCONSENSUS {
-    tag "${meta.id}"
-    label 'process_medium'
+    tag "${meta.id}---${chrName}"
+    label 'process_short_single'
 
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
         ? 'docker.io/biocorecrg/mop_consensus:0.1'
@@ -10,6 +10,7 @@ process NANOCONSENSUS {
 
     tuple val(meta), path(Epi_Sample), path(Epi_IVT), path(baseQ), path(nanorms_si), path(nanorms_dt), path(nanorms_sd), val(chrName), val(chrStart), val(chrEnd)
     tuple val(meta2), path(reference)
+    tuple val(meta3), path(mod_annotation)
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,10 +27,12 @@ process NANOCONSENSUS {
 	-chr ${chrName} \
 	-ini_pos ${chrStart} -fin_pos ${chrEnd} \
 	-output ${prefix} \
-	-fasta ${reference} ${args}
+	-fasta ${reference} --bed ${mod_annotation} ${args}
     """
 
     output:
-    tuple val(meta), path("*"), emit: output
+    tuple val(meta), path("*-NanoConsensus_Scores.pdf"), emit: plots
+    tuple val(meta), path("*_Supported_kmers.bedrmod"), emit: results
+    tuple val(meta), path("BedRmod_tracks/*"), emit: bedrmods_tracks
     tuple val("${task.process}"), val("nanoconsensus"), eval("echo 2.0"), topic: versions
 }

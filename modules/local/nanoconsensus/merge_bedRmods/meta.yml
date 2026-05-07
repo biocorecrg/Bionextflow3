@@ -1,0 +1,10 @@
+name: merge_bedRmods
+description: "Script to concatenate multilple bedRmods into one single file."
+keywords:
+  - bedrmod
+  - RNA
+
+authors:
+  - "@andelgado"
+maintainers:
+  - "@andelgado"
