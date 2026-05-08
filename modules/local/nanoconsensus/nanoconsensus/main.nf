@@ -32,7 +32,7 @@ process NANOCONSENSUS {
 
     output:
     tuple val(meta), path("*-NanoConsensus_Scores.pdf"), emit: plots
-    tuple val(meta), path("*_Supported_kmers.bedrmod"), emit: results
+    tuple val(meta), path("*_Supported_kmers.bedrmod"), emit: results, optional: true
     tuple val(meta), path("BedRmod_tracks/*"), emit: bedrmods_tracks
     tuple val("${task.process}"), val("nanoconsensus"), eval("echo 2.0"), topic: versions
 }
