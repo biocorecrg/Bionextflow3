@@ -1130,12 +1130,17 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
   unique_regions <- reduce(all_ranges)
   
   #Create a logical matrix: rows = significant kmers, columns = original GRanges object
-  overlap_matrix <- sapply(GRanges_list, function(gr) {
+  overlap_matrix <- do.call(cbind, lapply(GRanges_list, function(gr) {
     overlaps <- findOverlaps(unique_regions, gr)
     hits <- logical(length(unique_regions))
     hits[queryHits(overlaps)] <- TRUE
     hits
-  })
+  }))
+
+  #Ensure overlap_matrix is always a 2D matrix
+  if (is.null(dim(overlap_matrix))) {
+    overlap_matrix <- as.matrix(overlap_matrix)
+  }
 
   #Report the regions supported by 2, 3, 4, 5 and 6 softwares:
   initial <- TRUE
