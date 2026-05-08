@@ -608,6 +608,7 @@ calcNanoConsensusScore <- function(data, type) {
     return(apply(processed_data,1,sum,na.rm = TRUE))
 
   } else {
+    print(data)
     return(apply(data,1,median,na.rm = TRUE))
   }
 }
@@ -665,29 +666,30 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
         data[,i] <- rescale(unlist(data[i]), to=c(0,1), na.rm=TRUE)
 
       }
-
+      
       #Rescale outputs 0.5 when the software gives the same MZS for all positions - correcting for it if needed:
-      if (length(unique(data$positions_df.Epinano_Score)) == 1 || all(is.na(unique(data$positions_df.Epinano_Score)))) {
+      #If all values are NA, keep NA; if all non-NA values are the same, replace with 0
+      if (!all(is.na(data$positions_df.Epinano_Score)) && length(unique(na.omit(data$positions_df.Epinano_Score))) == 1) {
         data$positions_df.Epinano_Score <- 0
       }
 
-      if (length(unique(data$positions_df.F5C_Score)) == 1 || all(is.na(unique(data$positions_df.F5C_Score)))) {
+      if (!all(is.na(data$positions_df.F5C_Score)) && length(unique(na.omit(data$positions_df.F5C_Score))) == 1) {
         data$positions_df.F5C_Score <- 0
       }
 
-      if (length(unique(data$positions_df.baseQ_Score)) == 1 || all(is.na(unique(data$positions_df.baseQ_Score)))) {
+      if (!all(is.na(data$positions_df.baseQ_Score)) && length(unique(na.omit(data$positions_df.baseQ_Score))) == 1) {
         data$positions_df.baseQ_Score <- 0
       }
 
-      if (length(unique(data$positions_df.NanoRMS_SI_Score)) == 1 || all(is.na(unique(data$positions_df.NanoRMS_SI_Score)))) {
+      if (!all(is.na(data$positions_df.NanoRMS_SI_Score)) && length(unique(na.omit(data$positions_df.NanoRMS_SI_Score))) == 1) {
         data$positions_df.NanoRMS_SI_Score <- 0
       }
 
-      if (length(unique(data$positions_df.NanoRMS_DT_Score)) == 1 || all(is.na(unique(data$positions_df.NanoRMS_DT_Score)))) {
+      if (!all(is.na(data$positions_df.NanoRMS_DT_Score)) && length(unique(na.omit(data$positions_df.NanoRMS_DT_Score))) == 1) {
         data$positions_df.NanoRMS_DT_Score <- 0
       }
 
-      if (length(unique(data$positions_df.NanoRMS_SD_Score)) == 1 || all(is.na(unique(data$positions_df.NanoRMS_SD_Score)))) {
+      if (!all(is.na(data$positions_df.NanoRMS_SD_Score)) && length(unique(na.omit(data$positions_df.NanoRMS_SD_Score))) == 1) {
         data$positions_df.NanoRMS_SD_Score <- 0
       }
 
@@ -697,7 +699,13 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
       
       threshold <- Consensus_score * median(positions_df$Merged_Score, na.rm = TRUE)
       print(threshold)
-      positions_NanoConsensus <- subset(positions_df, Merged_Score >= threshold)
+
+      if (threshold == 0) {
+        positions_NanoConsensus <- subset(positions_df, Merged_Score > threshold)
+      } else {
+        positions_NanoConsensus <- subset(positions_df, Merged_Score >= threshold)
+      }
+
     }
   } else {
     positions_df <- ""
