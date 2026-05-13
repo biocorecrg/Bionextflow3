@@ -26,7 +26,7 @@ epinano_processing <- function(sample_file, ivt_file, initial_position, final_po
 
   #Import and clean data:
   sample <- read_csv_file(sample_file)
-  sample <- subset(sample, cov>Coverage)
+  sample <- subset(sample, cov>=Coverage)
   sample <- subset(sample, pos>=initial_position)
   sample <- subset(sample, pos<=final_position)
   sample$reference <- paste(sample$X.Ref, sample$pos, sep='_')
@@ -39,7 +39,7 @@ epinano_processing <- function(sample_file, ivt_file, initial_position, final_po
   colnames(sample) <- c('Reference', 'Position', 'Difference_sample', 'Merge')
 
   ivt <- read_csv_file(ivt_file)
-  ivt <- subset(ivt, cov>Coverage)
+  ivt <- subset(ivt, cov>=Coverage)
   ivt <- subset(ivt, pos>=initial_position)
   ivt <- subset(ivt, pos<=final_position)
   ivt$reference <- paste(ivt$X.Ref, ivt$pos, sep='_')
@@ -700,7 +700,7 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
       threshold <- Consensus_score * median(positions_df$Merged_Score, na.rm = TRUE)
       print(threshold)
 
-      if (threshold == 0) {
+      if (!is.na(threshold) && threshold == 0) {
         positions_NanoConsensus <- subset(positions_df, Merged_Score > threshold)
       } else {
         positions_NanoConsensus <- subset(positions_df, Merged_Score >= threshold)
