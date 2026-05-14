@@ -261,7 +261,7 @@ def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
     def myseqs = channel.of()
     def mypars = channel.of()
 
-    if (input_string.contains("{") && input_string.contains(",") && input_string.contains("}")) {
+    if (input_string && input_string.contains("{") && input_string.contains(",") && input_string.contains("}")) {
         myseqs = channel.fromFilePairs(input_string, checkIfExists: true, type: mytype)
             .map { [[id: it[0], single_end: false], it[1]] }
     }
