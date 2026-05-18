@@ -36,7 +36,7 @@ process ANNOTATE_SHORTSTACK {
 
     """
        ${exec} > mygenes.gtf
-       awk '{print \$3"\t"\$4"\t"\$5"\t"\$1"\t"\$19"-"\$20"\t"\$10}' ${short_res} | grep -v "Start" > Results.bed
+       awk '{print \$3"\t"\$4"\t"\$5"\t"\$1"\t"\$19"-"\$20"\t"\$10"\t"\$21}' ${short_res} | grep -v "Start" > Results.bed
        bedtools intersect -a Results.bed -b mygenes.gtf -loj ${bedopt} | gzip -c > intersect.txt.gz
        parse_bed_anno_to_tsv.py -i intersect.txt.gz -o half_table.txt
 	   cut -f4-  Counts.txt| sed s/_trimmed_condensed//g  > raw_counts.txt
