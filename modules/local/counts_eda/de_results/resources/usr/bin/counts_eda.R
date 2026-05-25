@@ -45,7 +45,10 @@ dds <- filterDDS(out$dds, args$min_count)
 vsd<-makeVST(dds, FALSE)
 
 # Removing ~ for the condition field
-condition<-trimws(gsub("~","",args$Assay_field))
+if (args$Contrast == "") {
+	contrast = str_remove(args$Assay_field, '~ ')
+} else contrast = args$Contrast
+
 print(args$Number_principal_components)
 
 ##################################  PCA #############################
