@@ -120,7 +120,8 @@ def make_yaml_methods(mymap, toplevel) {
             v.each { k2, v2 ->
                 flattenedMap[k2] = v2
             }
-        } else {
+        }
+        else {
             flattenedMap[k] = v
         }
     }
@@ -148,7 +149,7 @@ def emptyMeta() {
 
 def makeSoftwareVersionYamlFile(ch_versions) {
     def ch_collated_versions = softwareVersionsToYAML(ch_versions)
-        .map { yaml_str -> 
+        .map { yaml_str ->
             def yaml = new org.yaml.snakeyaml.Yaml()
             return yaml.load(yaml_str)
         }
@@ -296,7 +297,9 @@ def fromNFcoreToValueChannel(input_channel) {
 def addPrefixToFiles(input_nf_ch, prefix) {
     def output_nf_ch = []
     output_nf_ch = input_nf_ch.map { meta, files ->
-        [[id: "${meta.id}${prefix}", single_end: meta.single_end], files]
+        def new_meta = meta.clone()
+        new_meta.id = "${new_meta.id}${prefix}"
+        [new_meta, files]
     }
     return (output_nf_ch)
 }
