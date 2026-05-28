@@ -1,4 +1,4 @@
-process DE_RESULTS {
+process DESEQ2 {
     tag "${meta.id}"
     container 'ghcr.io/biocorecrg/biocorecrg_deseq:latest'
 

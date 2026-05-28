@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 suppressMessages(library("argparse"))
 suppressMessages(library("stringr"))
 suppressMessages(library("DESeq2"))

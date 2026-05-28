@@ -1,4 +1,4 @@
-process COUNTS_EDA {
+process DE_PCA {
     tag "${meta.id}"
     container 'ghcr.io/biocorecrg/biocorecrg_deseq:latest'
 
