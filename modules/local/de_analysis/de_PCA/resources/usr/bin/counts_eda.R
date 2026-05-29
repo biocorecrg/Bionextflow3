@@ -1,6 +1,6 @@
 #!/usr/local/bin/Rscript --vanilla
 
-source(Sys.which("functions.R"))
+source("/functions.R")
 
 
 
