@@ -8,12 +8,8 @@ process SNPSIFT_ANNOTATE {
 
     input:
     tuple val(meta), path(vcf), path(vcf_tbi)
-    path(databases)
-    path(databases_idx)
-
-    output:
-    tuple val(meta), path("*.vcf"), emit: vcf
-    tuple val("${task.process}"), val('snpsift'), eval("SnpSift split -h 2>&1 | sed 's/^.*version //' | sed 's/(.*//' | sed 's/t//g'"), topic: versions, emit: versions_snpsift
+    path databases
+    path databases_idx
 
     when:
     task.ext.when == null || task.ext.when
@@ -32,7 +28,8 @@ process SNPSIFT_ANNOTATE {
 
         if (idx == 0) {
             commands << "SnpSift annotate ${current_args} ${db} ${vcf}"
-        } else {
+        }
+        else {
             commands << "SnpSift annotate ${current_args} ${db}"
         }
     }
@@ -46,4 +43,8 @@ process SNPSIFT_ANNOTATE {
     """
     touch ${prefix}.vcf
     """
+
+    output:
+    tuple val(meta), path("*.vcf"), emit: vcf
+    tuple val("${task.process}"), val('snpsift'), eval("SnpSift split -h 2>&1 | sed 's/^.*version //' | sed 's/(.*//' | sed 's/ .*//'"), topic: versions, emit: versions_snpsift
 }
