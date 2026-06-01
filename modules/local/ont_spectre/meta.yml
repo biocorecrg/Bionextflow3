@@ -1,0 +1,20 @@
+name: "ont_spectre"
+description: "Long-read copy number variation (CNV) caller designed to detect large CNVs (>100kb) using Oxford Nanopore data"
+keywords:
+  - cnv
+  - nanopore
+  - copy number variation
+  - structural variants
+  - long-reads
+tools:
+  - "ont-spectre":
+      description: "Long-read copy number variation (CNV) caller designed to detect large CNVs (>100kb)"
+      homepage: "https://github.com/epi2me-labs/ont-spectre"
+      documentation: "https://github.com/epi2me-labs/ont-spectre"
+      doi: ""
+      licence: ["MIT"]
+      identifier: ""
+authors:
+  - "@matthdsm"
+maintainers:
+  - "@matthdsm"
