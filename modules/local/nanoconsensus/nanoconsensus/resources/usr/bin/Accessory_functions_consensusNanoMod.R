@@ -100,70 +100,6 @@ epinano_processing <- function(sample_file, ivt_file, initial_position, final_po
   return(list(plotting_positions, significant_positions, coverage_data))
 }
 
-f5C_processing <- function(sample_file, ivt_file, initial_position, final_position, MZS_thr, chr, exclude_SNP, Coverage) {
-
-  #Import data:
-  sample <- read_tab_file(sample_file)
-
-  if (nrow(sample)>0) {
-    #Add sample information:
-    sample$feature <- 'f5C'
-    ## Note: no coverage data available in current f5c output
-    ##sample <- subset(sample, coverage>Coverage)
-    colnames(sample)<- c("contig_wt","position", "event_level_median_wt", "feature_wt")
-    sample<- subset(sample, contig_wt == chr)
-    sample$reference <- paste(sample$contig_wt, sample$position, sep='_')
-
-    #Import KO:
-    raw_data_ivt <- read_tab_file(ivt_file)
-    ## Note: no coverage data available in current f5c output
-    ##raw_data_ivt <- subset(raw_data_ivt, coverage>Coverage)
-    colnames(raw_data_ivt)<- c("contig_ko","position","event_level_median_ko")
-    raw_data_ivt <- subset(raw_data_ivt, contig_ko == chr)
-    raw_data_ivt$reference <- paste(raw_data_ivt$contig_ko, raw_data_ivt$position, sep='_')
-
-    #Join tables, calculate differences between means/medians:
-    plotting_data <- join(sample, raw_data_ivt, by="reference", type='inner')
-    plotting_data$diff <- abs(plotting_data$event_level_median_ko-plotting_data$event_level_median_wt)
-    plotting_positions <- data.frame(plotting_data$reference, plotting_data$position, plotting_data$diff, plotting_data$feature_wt)
-    colnames(plotting_positions) <- c('Reference', 'Position', 'Difference', 'Feature')
-
-    plotting_positions <- subset(plotting_positions, Position>=initial_position)
-    plotting_positions <- subset(plotting_positions, Position<=final_position)
-
-    #Exclude SNPs and 10 positions before and after (21mer):
-    if (length(exclude_SNP)!=0) {
-      excluded_positions <- c()
-
-      for (single_position in exclude_SNP){
-        excluded_positions <- c(excluded_positions, seq(single_position-10,single_position+10))
-      }
-
-      plotting_positions <- subset(plotting_positions, !Position %in% unique(excluded_positions))
-    }
-
-    #Calculate the threshold:
-    threshold <- median(plotting_positions$Difference, na.rm = TRUE)
-
-    #Calculate fold change:
-    plotting_positions$Score <- plotting_positions$Difference/threshold
-    plotting_positions$Modified_ZScore <- (plotting_positions$Score-median(plotting_positions$Score, na.rm = TRUE))/sd(plotting_positions$Score, na.rm = TRUE)
-
-    #Format data for plotting:
-    plotting_positions <- plotting_positions[,c(1,2,5,4,6)]
-
-    #Extract significant positions:
-    significant_positions <- subset(plotting_positions, Modified_ZScore>MZS_thr)
-
-  } else {
-    plotting_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
-    significant_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
-  }
-
-  return(list(plotting_positions,significant_positions))
-
-}
-
 bedmethyl_processing <- function(sample_file, initial_position, final_position, MZS_thr, chr, exclude_SNP, Coverage, feature) {
   #Import data:
   sample <- read_tab_file(sample_file)
@@ -265,8 +201,8 @@ barplot_plotting <- function (list_plotting, list_significant, output_name, MZS_
   }
 
   #Set Feature into a factor for plotting purposes:
-  initial_df$sample_f <- factor(initial_df$Feature, levels = c('Epinano', 'f5C', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD'))
-  putative_positions$sample_f <- factor(putative_positions$Feature, levels = c('Epinano', 'f5C', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD'))
+  initial_df$sample_f <- factor(initial_df$Feature, levels = c('Epinano', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD'))
+  putative_positions$sample_f <- factor(putative_positions$Feature, levels = c('Epinano', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD'))
 
   ##Plotting:
   #If there are annotated positions:
@@ -275,7 +211,7 @@ barplot_plotting <- function (list_plotting, list_significant, output_name, MZS_
       geom_bar(data=subset(initial_df, Modified_ZScore < MZS_thr), stat= "identity", width=4, fill = "#dcdcdd") +
       new_scale_color() + xlim(initial_pos, final_pos) + ylab('Z-Score ((x-median)/sd)') + xlab("") +
       geom_bar(data=subset(initial_df, Modified_ZScore >= MZS_thr), stat = "identity", width=4) +
-      scale_fill_manual(values = c("#00A651", "#662D91", "#00AEEF", "#F59364", "#C48240", "#AB7A62"), breaks = c('Epinano', 'f5C', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD')) +
+      scale_fill_manual(values = c("#00A651", "#00AEEF", "#F59364", "#C48240", "#AB7A62"), breaks = c('Epinano', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD')) +
       geom_vline(xintercept=as.numeric(annotation$V3), linetype="dashed") +
       theme_bw() +theme(plot.title = element_text(face = "bold", hjust = 0.5), text = element_text(size=25),
                         axis.text = element_text(size = 25), strip.text.y = element_text(size = 20),
@@ -287,7 +223,7 @@ barplot_plotting <- function (list_plotting, list_significant, output_name, MZS_
       geom_bar(data=subset(initial_df, Modified_ZScore < MZS_thr), stat= "identity", width=4, fill = "#dcdcdd") +
       new_scale_color() + xlim(initial_pos, final_pos) + ylab('Z-Score ((x-median)/sd)') + xlab("") +
       geom_bar(data=subset(initial_df, Modified_ZScore >= MZS_thr), stat = "identity", width=4) +
-      scale_fill_manual(values = c("#00A651", "#662D91", "#00AEEF", "#F59364", "#C48240", "#AB7A62"), breaks = c('Epinano', 'f5C', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD')) +
+      scale_fill_manual(values = c("#00A651", "#00AEEF", "#F59364", "#C48240", "#AB7A62"), breaks = c('Epinano', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD')) +
       theme_bw() +theme(plot.title = element_text(face = "bold", hjust = 0.5), text = element_text(size=25),
                         axis.text = element_text(size = 25), strip.text.y = element_text(size = 20),
                         legend.text=element_text(size=22), legend.position = "none") +
@@ -626,29 +562,25 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
     
     #Extracting scores and software status:
     epinano_data <- extracting_status(positions_df, 1, summit, MZS_thr)
-    f5C_data <- extracting_status(positions_df, 2, summit, MZS_thr)
-    baseQ_data <- extracting_status(positions_df, 3, summit, MZS_thr)
-    nanoRMS_SI_data <- extracting_status(positions_df, 4, summit, MZS_thr)
-    nanoRMS_DT_data <- extracting_status(positions_df, 5, summit, MZS_thr)
-    nanoRMS_SD_data <- extracting_status(positions_df, 6, summit, MZS_thr)
+    baseQ_data <- extracting_status(positions_df, 2, summit, MZS_thr)
+    nanoRMS_SI_data <- extracting_status(positions_df, 3, summit, MZS_thr)
+    nanoRMS_DT_data <- extracting_status(positions_df, 4, summit, MZS_thr)
+    nanoRMS_SD_data <- extracting_status(positions_df, 5, summit, MZS_thr)
     
     #Add data to the final dataframe:
     positions_df$Epinano_RawScore <- epinano_data$rawScore
-    positions_df$F5C_RawScore <- f5C_data$rawScore
     positions_df$baseQ_RawScore <- baseQ_data$rawScore
     positions_df$NanoRMS_SI_RawScore <- nanoRMS_SI_data$rawScore
     positions_df$NanoRMS_DT_RawScore <- nanoRMS_DT_data$rawScore
     positions_df$NanoRMS_SD_RawScore <- nanoRMS_SD_data$rawScore
 
     positions_df$Epinano_Score <- epinano_data$modifiedScore
-    positions_df$F5C_Score <- f5C_data$modifiedScore
     positions_df$baseQ_Score <- baseQ_data$modifiedScore
     positions_df$NanoRMS_SI_Score <- nanoRMS_SI_data$modifiedScore
     positions_df$NanoRMS_DT_Score <- nanoRMS_DT_data$modifiedScore
     positions_df$NanoRMS_SD_Score <- nanoRMS_SD_data$modifiedScore
 
     positions_df$Epinano_Status <- epinano_data$status
-    positions_df$F5C_Status <- f5C_data$status
     positions_df$baseQ_Status <- baseQ_data$status
     positions_df$NanoRMS_SI_Status <- nanoRMS_SI_data$status
     positions_df$NanoRMS_DT_Status <- nanoRMS_DT_data$status
@@ -659,7 +591,7 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
     ##Calculate the merged_score:
     #Re-scaling:
     if (summit == F){
-      data <- data.frame(positions_df$Epinano_Score, positions_df$F5C_Score, positions_df$baseQ_Score, positions_df$NanoRMS_SI_Score, positions_df$NanoRMS_DT_Score, positions_df$NanoRMS_SD_Score)
+      data <- data.frame(positions_df$Epinano_Score, positions_df$baseQ_Score, positions_df$NanoRMS_SI_Score, positions_df$NanoRMS_DT_Score, positions_df$NanoRMS_SD_Score)
 
       #Re-scale Modified Z-Scores between 0 and 1:
       for (i in seq(1:length(data))) {
@@ -671,10 +603,6 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
       #If all values are NA, keep NA; if all non-NA values are the same, replace with 0
       if (!all(is.na(data$positions_df.Epinano_Score)) && length(unique(na.omit(data$positions_df.Epinano_Score))) == 1) {
         data$positions_df.Epinano_Score <- 0
-      }
-
-      if (!all(is.na(data$positions_df.F5C_Score)) && length(unique(na.omit(data$positions_df.F5C_Score))) == 1) {
-        data$positions_df.F5C_Score <- 0
       }
 
       if (!all(is.na(data$positions_df.baseQ_Score)) && length(unique(na.omit(data$positions_df.baseQ_Score))) == 1) {
@@ -1027,7 +955,7 @@ kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotati
   
   #If needed, generate bedRmod tracks:
   if (tracks){
-    bedRmod_tracks(all_ranges[,c(1,2,3,10,11,12,13,14,15,22)], output_name, c(color_beds,"190,30,45"), c(methods_name, 'NanoConsensus'), organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment)
+    bedRmod_tracks(all_ranges[,c(1,2,3,9,10,11,12,13,19)], output_name, c(color_beds,"190,30,45"), c(methods_name, 'NanoConsensus'), organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment)
   }
 
   #If annotation file is provided, calculate distance to the nearest + annotated site:
@@ -1046,14 +974,13 @@ kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotati
 
 analysis_significant_positions <- function (list_significant, list_plotting, fasta_file, output_name, initial_position, final_position, MZS_thr, Consensus_score, model_score, barplot_4soft, annotation, ablines, chr, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", extended_outputs = FALSE) {
   epinano <- list_significant[[1]]
-  f5C <- list_significant[[2]]
-  baseQ <- list_significant[[3]]
-  nanoRMS_SI <- list_significant[[4]]
-  nanoRMS_DT <- list_significant[[5]]
-  nanoRMS_SD <- list_significant[[6]]
+  baseQ <- list_significant[[2]]
+  nanoRMS_SI <- list_significant[[3]]
+  nanoRMS_DT <- list_significant[[4]]
+  nanoRMS_SD <- list_significant[[5]]
 
-  methods <- list(epinano, f5C, baseQ, nanoRMS_SI, nanoRMS_DT, nanoRMS_SD)
-  methods_name <- c('Epinano', 'f5C', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD')
+  methods <- list(epinano, baseQ, nanoRMS_SI, nanoRMS_DT, nanoRMS_SD)
+  methods_name <- c('Epinano', 'baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD')
 
   #Create grRange objects with kmers per each method:
   #print('Transforming data into GRange objects')
@@ -1098,7 +1025,7 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
 
   ##Perform intersections:
   #Check how many elements are in each GRange object and if it is null, create an empty one:
-  GRanges_list <- list(grEpinano, grf5C, grbaseQ, grnanoRMS_SI, grnanoRMS_DT, grnanoRMS_SD)
+  GRanges_list <- list(grEpinano, grbaseQ, grnanoRMS_SI, grnanoRMS_DT, grnanoRMS_SD)
   supported_kmers_per_software <- c()
 
   for (count in seq(1, length(GRanges_list))){
@@ -1117,7 +1044,7 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
   }
   
   ##Generate bed files:
-  color_beds <- c("0,166,81", "102,45,145", "0,174,239","242,101,34", "196,130,64", "171,122,98")
+  color_beds <- c("0,166,81", "0,174,239","242,101,34", "196,130,64", "171,122,98")
   if (extended_outputs) {
     bed_tracks(GRanges_list, output_name, color_beds, methods_name)
   }
@@ -1145,7 +1072,7 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
   #Report the regions supported by 2, 3, 4, 5 and 6 softwares:
   initial <- TRUE
   
-  for (i in seq(2,6)){
+  for (i in seq(2,5)){
     intersection <- unique_regions[rowSums(overlap_matrix) >= i]
     length_intersection <- extract_length_from_GRobjects(intersection)
 

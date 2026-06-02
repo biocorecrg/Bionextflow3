@@ -57,10 +57,6 @@ parser$add_argument("--experiment", default="", type="character", help="Experime
 parser$add_argument("-Epi_Sample", nargs=1,  default="", type="character", help="Path to Epinano features sample results.")
 parser$add_argument("-Epi_IVT", nargs=1, default="", type="character", help="Path to Epinano features IVT results.")
 
-#NANOPOLISH:
-parser$add_argument("-f5C_Sample", nargs=1, default="", type="character", help="Path to Nanopolish mean per position sample results.")
-parser$add_argument("-f5C_IVT", nargs=1, default="", type="character", help="Path to Nanopolish mean per position IVT results.")
-
 ##Bedmethyl inputs:
 #BaseQ:
 parser$add_argument("-BaseQ", nargs=1, default="", type="character", help="Path to baseQ pairwise comparison results.")
@@ -95,15 +91,6 @@ if (file.exists(args$Epi_Sample) && (file.exists(args$Epi_IVT))) {
 
 }
 
-##f5C processing:
-if (file.exists(args$f5C_Sample) && (file.exists(args$f5C_IVT))) {
-  f5C_data <- f5C_processing(args$f5C_Sample, args$f5C_IVT, args$Initial_position, args$Final_position, args$MZS_thr, args$Chr, args$Exclude, args$coverage)
-
-} else {
-  f5C_data <- list(data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character()),data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character()))
-
-}
-
 ##Bedmethyl processing:
 files_to_parse <- c(args$BaseQ, args$nanoRMS_SI, args$nanoRMS_DT, args$nanoRMS_SD)
 features_to_parse <- c('baseQ', 'nanoRMS_SI', 'nanoRMS_DT', 'nanoRMS_SD')
@@ -122,10 +109,10 @@ for (i in seq(1,length(files_to_parse))){
 
 ##DATA PROCESSING:
 #Generate list with all positions and significant positions respectively:
-list_plotting <- list(epinano_data[[1]], f5C_data[[1]], baseQ_data[[1]], nanoRMS_SI_data[[1]], nanoRMS_DT_data[[1]], nanoRMS_SD_data[[1]])
-list_significant <- list(epinano_data[[2]], f5C_data[[2]], baseQ_data[[2]], nanoRMS_SI_data[[2]], nanoRMS_DT_data[[2]], nanoRMS_SD_data[[2]])
+list_plotting <- list(epinano_data[[1]], baseQ_data[[1]], nanoRMS_SI_data[[1]], nanoRMS_DT_data[[1]], nanoRMS_SD_data[[1]])
+list_significant <- list(epinano_data[[2]], baseQ_data[[2]], nanoRMS_SI_data[[2]], nanoRMS_DT_data[[2]], nanoRMS_SD_data[[2]])
 
-#Extract first available coverage data (epinano, baseQ, or nanoRMS - f5C doesn't have coverage)
+#Extract first available coverage data (epinano, baseQ, or nanoRMS)
 coverage_data <- NULL
 coverage_sources <- list(
   if (length(epinano_data) >= 3) epinano_data[[3]] else NULL,
