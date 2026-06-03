@@ -8,7 +8,7 @@ process NANOCONSENSUS {
 
     input:
 
-    tuple val(meta), path(Epi_Sample), path(Epi_IVT), path(baseQ), path(nanorms_si), path(nanorms_dt), path(nanorms_sd), val(chrName), val(chrStart), val(chrEnd)
+    tuple val(meta), path(Epi_Sample), path(Epi_IVT), path(baseQ), path(nanorms_si), path(nanorms_dt), path(nanorms_sd), val(chrName), val(chrStart), val(chrEnd), val(strand)
     tuple val(meta2), path(reference)
     tuple val(meta3), path(mod_annotation)
 
@@ -27,7 +27,8 @@ process NANOCONSENSUS {
 	-chr ${chrName} \
 	-ini_pos ${chrStart} -fin_pos ${chrEnd} \
 	-output ${prefix} \
-	-fasta ${reference} --bed ${mod_annotation} ${args}
+	-fasta ${reference} --bed ${mod_annotation} \
+    --strand ${strand} ${args}
     """
 
     output:
