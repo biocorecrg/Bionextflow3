@@ -5,9 +5,9 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) < 3) {
-  cat("Usage: Rscript concatenate_bedrmod.R file1.bedrmod file2.bedrmod ... output.bedrmod\n")
-  cat("At least 2 input files and 1 output file must be provided.\n")
+if (length(args) < 2) {
+  cat("Usage: Rscript concatenate_bedrmod.R file1.bedrmod [file2.bedrmod ...] output.bedrmod\n")
+  cat("At least 1 input file and 1 output file must be provided.\n")
   quit(status = 1)
 }
 
@@ -15,10 +15,7 @@ if (length(args) < 3) {
 output_file <- args[length(args)]
 input_files <- args[-length(args)]
 
-if (length(input_files) < 2) {
-  cat("Error: At least 2 input files required.\n")
-  quit(status = 1)
-}
+# Input files validation already done above
 
 # Read header from first file to use as template
 first_file <- input_files[1]
