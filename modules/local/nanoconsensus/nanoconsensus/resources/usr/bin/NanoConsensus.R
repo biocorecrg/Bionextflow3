@@ -52,6 +52,7 @@ parser$add_argument("--annotation_version", default="", type="character", help="
 parser$add_argument("--basecalling", default="", type="character", help="Basecalling method for bedRmod header")
 parser$add_argument("--bioinformatics_workflow", default="", type="character", help="Bioinformatics workflow for bedRmod header")
 parser$add_argument("--experiment", default="", type="character", help="Experiment description for bedRmod header")
+parser$add_argument("--strand", default="", type="character", help="Strand information for bedRmod data")
 
 #EPINANO:
 parser$add_argument("-Epi_Sample", nargs=1,  default="", type="character", help="Path to Epinano features sample results.")
@@ -129,6 +130,12 @@ for (cov in coverage_sources) {
   }
 }
 
+#Exit if no coverage data is available
+if (is.null(coverage_data)) {
+  write("ERROR: No coverage data found in any input files", file = paste("NanoConsensus_", args$Output_name,".log", sep=""), append = T)
+  stop("No coverage data available - cannot proceed with analysis")
+}
+
 #If there is annotation, process it:
 if (length(args$bed)!=0){
   annotation <- process_bed(args$bed, args$Chr)
@@ -142,4 +149,4 @@ barplot_4soft <- barplot_plotting(list_plotting, list_significant, args$Output_n
 
 ##Analysis of SIGNIFICANT POSITIONS across methods:
 write('Step 3: Overlapping analysis', file = paste("NanoConsensus_", args$Output_name,".log", sep=""), append = T)
-analysis_significant_positions(list_significant, list_plotting, args$Fasta_file, paste(args$Output_name, args$Chr, sep='_'),  args$Initial_position, args$Final_position, args$MZS_thr, args$NC_thr, args$model_score, barplot_4soft, annotation, args$ablines, args$Chr, coverage_data, args$organism, args$assembly, args$annotation_source, args$annotation_version, args$basecalling, args$bioinformatics_workflow, args$experiment, args$extended_outputs)
+analysis_significant_positions(list_significant, list_plotting, args$Fasta_file, paste(args$Output_name, args$Chr, sep='_'),  args$Initial_position, args$Final_position, args$MZS_thr, args$NC_thr, args$model_score, barplot_4soft, annotation, args$ablines, args$Chr, coverage_data, args$organism, args$assembly, args$annotation_source, args$annotation_version, args$basecalling, args$bioinformatics_workflow, args$experiment, args$extended_outputs, args$strand)

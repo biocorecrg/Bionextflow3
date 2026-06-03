@@ -94,7 +94,7 @@ epinano_processing <- function(sample_file, ivt_file, initial_position, final_po
   } else {
     plotting_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
     significant_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
-    coverage_data <- data.frame(Position=integer(), Coverage=integer(), stringsAsFactors = FALSE)
+    
   }
 
   return(list(plotting_positions, significant_positions, coverage_data))
@@ -171,7 +171,7 @@ bedmethyl_processing <- function(sample_file, initial_position, final_position, 
   } else {
     plotting_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
     significant_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
-    coverage_data <- data.frame(Position=integer(), Coverage=integer(), stringsAsFactors = FALSE)
+    
   }
 
   return(list(plotting_positions, significant_positions, coverage_data))
@@ -644,7 +644,7 @@ extracting_modified_ZScores <- function (GRange_supported_kmers, MZS_thr, summit
   return(list(positions_df, positions_NanoConsensus))
 }
 
-bedRmod_tracks <- function (data, output_name, color, methods, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "") {
+bedRmod_tracks <- function (data, output_name, color, methods, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", strand = "") {
 
   #Check if output directory exists - if not, create it:
   if (!dir.exists("./BedRmod_tracks")){
@@ -669,7 +669,7 @@ bedRmod_tracks <- function (data, output_name, color, methods, organism = "", as
       End = subset_data$End,
       Name = 'xX',
       Score = sprintf("%.3f", subset_data$Score),
-      Strand = "",
+      Strand = strand,
       ThickStart = data[,2],
       ThickEnd = data[,3],
       ItemRgb = "0,0,0",
@@ -731,15 +731,15 @@ nearest_distance_mod <- function(all_ranges, annotation) {
   for (i in 1:nrow(all_ranges)){
 
     #Define variables to determine distance to nearest modified site:
-    initial <- all_ranges[i,2]
-    final <- all_ranges[i,3]
+    initial <- as.numeric(all_ranges[i,2])
+    final <- as.numeric(all_ranges[i,3])
     single_distance <- c()
     single_mods <- c()
     within <- FALSE
 
     #Loop through all the annotated positions:
     for (j in 1:nrow(annotation)){
-      annotated_position <- annotation[j,3]
+      annotated_position <- as.numeric(annotation[j,3])
 
       #Annotated position within the modified kmer:
       if (annotated_position<=final && annotated_position>=initial && within==TRUE){
@@ -753,7 +753,7 @@ nearest_distance_mod <- function(all_ranges, annotation) {
 
       } else {
         #Annotated position outside the modified kmer:
-        d <- min(abs(annotated_position-initial), abs(annotated_position-final))
+        d <- min(abs(as.numeric(annotated_position)-as.numeric(initial)), abs(as.numeric(annotated_position)-as.numeric(final)))
         if (d<single_distance || length(single_distance)==0){
           single_distance <- d
           single_mods <- paste(annotation[j,4],annotation[j,3], sep="-")
@@ -777,7 +777,7 @@ nearest_distance_mod <- function(all_ranges, annotation) {
 
 create_bedRmod_headers <- function(organism = "", modification_names = "", assembly = "",
                                     annotation_source = "", annotation_version = "",
-                                    basecalling = "", bioinformatics_workflow = "", experiment = "") {
+                                    basecalling = "", bioinformatics_workflow = "", experiment = "", strand = "") {
   #Check if mandatory fields are empty
   missing_fields <- c()
   if (organism == "") missing_fields <- c(missing_fields, "organism")
@@ -807,15 +807,15 @@ create_bedRmod_headers <- function(organism = "", modification_names = "", assem
   )
 }
 
-write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annotation = NULL, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "") {
+write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annotation = NULL, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", strand = "") {
   bedRmod_rows <- list()
   collected_mod_names <- c()
 
   # Process all ranges from all_ranges
   for (i in 1:nrow(all_ranges)) {
     range_chr <- all_ranges$Chr[i]
-    range_start <- all_ranges$Start[i]
-    range_end <- all_ranges$End[i]
+    range_start <- as.numeric(all_ranges$Start[i])
+    range_end <- as.numeric(all_ranges$End[i])
 
     # Check if there's an overlapping annotation for this range
     overlapping_annotation <- NULL
@@ -829,7 +829,7 @@ write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annot
       # Case: Range overlaps with annotation(s)
       # Process each overlapping annotation separately
       for (ann_row in 1:nrow(overlapping_annotation)) {
-        ann_pos <- overlapping_annotation[ann_row, 3]
+        ann_pos <- as.numeric(overlapping_annotation[ann_row, 3])
         ann_mod_name <- overlapping_annotation[ann_row, 4]
         collected_mod_names <- c(collected_mod_names, ann_mod_name)
 
@@ -861,7 +861,7 @@ write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annot
           End = ann_pos + 1,
           Name = ann_mod_name,
           Score = score_formatted,
-          Strand = "",
+          Strand = strand,
           ThickStart = range_start,
           ThickEnd = range_end,
           ItemRgb = "0,0,0",
@@ -915,7 +915,7 @@ write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annot
         End = max_pos_end,
         Name = "xX",
         Score = score_formatted,
-        Strand = "",
+        Strand = strand,
         ThickStart = range_start,
         ThickEnd = range_end,
         ItemRgb = "0,0,0",
@@ -946,7 +946,7 @@ write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annot
   }
 }
 
-kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotation, sup_kmers, color_beds, methods_name, bedRmod = FALSE, bed_data = NULL, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", extended_outputs = NULL) {
+kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotation, sup_kmers, color_beds, methods_name, bedRmod = FALSE, bed_data = NULL, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", extended_outputs = NULL, strand = "") {
   print('Kmer analysis')
   kmer_data <- extract_kmers(all_ranges, fasta_file)
   all_ranges$Kmer <- kmer_data[[1]]
@@ -955,7 +955,7 @@ kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotati
   
   #If needed, generate bedRmod tracks:
   if (tracks){
-    bedRmod_tracks(all_ranges[,c(1,2,3,9,10,11,12,13,19)], output_name, c(color_beds,"190,30,45"), c(methods_name, 'NanoConsensus'), organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment)
+    bedRmod_tracks(all_ranges[,c(1,2,3,9,10,11,12,13,19)], output_name, c(color_beds,"190,30,45"), c(methods_name, 'NanoConsensus'), organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment, strand)
   }
 
   #If annotation file is provided, calculate distance to the nearest + annotated site:
@@ -965,14 +965,14 @@ kmer_analysis <- function (all_ranges, fasta_file, output_name, tracks, annotati
   
   #Output formatting:
   if (bedRmod) {
-    write_bedRmod_output(all_ranges, output_name, bed_data, annotation, coverage_data, organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment)
+    write_bedRmod_output(all_ranges, output_name, bed_data, annotation, coverage_data, organism, assembly, annotation_source, annotation_version, basecalling, bioinformatics_workflow, experiment, strand)
   } else if (extended_outputs) {
     write.table(all_ranges, file = output_name, sep = '\t', row.names = FALSE, quote = FALSE)
   }
 
 }
 
-analysis_significant_positions <- function (list_significant, list_plotting, fasta_file, output_name, initial_position, final_position, MZS_thr, Consensus_score, model_score, barplot_4soft, annotation, ablines, chr, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", extended_outputs = FALSE) {
+analysis_significant_positions <- function (list_significant, list_plotting, fasta_file, output_name, initial_position, final_position, MZS_thr, Consensus_score, model_score, barplot_4soft, annotation, ablines, chr, coverage_data = NULL, organism = "", assembly = "", annotation_source = "", annotation_version = "", basecalling = "", bioinformatics_workflow = "", experiment = "", extended_outputs = FALSE, strand = "") {
   epinano <- list_significant[[1]]
   baseQ <- list_significant[[2]]
   nanoRMS_SI <- list_significant[[3]]
@@ -1104,7 +1104,7 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
   #Analysis of all kmers across the chromosome:
   all_kmers_raw <- GRanges(seqnames = chr, ranges = IRanges(initial_position:(final_position-4), end = (initial_position+4):final_position))
   all_kmers <- extracting_modified_ZScores(all_kmers_raw, MZS_thr, FALSE, Consensus_score, model_score)
-  kmer_analysis(all_kmers[[1]], fasta_file, paste(output_name,'Raw_kmers.txt', sep='_'), TRUE, annotation, FALSE, color_beds, methods_name, extended_outputs = extended_outputs)
+  kmer_analysis(all_kmers[[1]], fasta_file, paste(output_name,'Raw_kmers.txt', sep='_'), TRUE, annotation, FALSE, color_beds, methods_name, extended_outputs = extended_outputs, strand = strand)
 
   #Analyse the supported kmers - only if they are present:
   if (is.null(supported_kmers)==FALSE) {
@@ -1112,7 +1112,7 @@ analysis_significant_positions <- function (list_significant, list_plotting, fas
 
     if(extract_length_from_GRobjects(filtered_supported_kmers)!=0){
       all_ranges <- extracting_modified_ZScores(filtered_supported_kmers, MZS_thr, TRUE, Consensus_score, model_score)
-      kmer_analysis(all_ranges[[1]], fasta_file, paste(output_name,'Supported_kmers.bedrmod', sep='_'), FALSE, annotation, TRUE, color_beds, methods_name, bedRmod = TRUE, bed_data = all_kmers[[1]], coverage_data = coverage_data, organism = organism, assembly = assembly, annotation_source = annotation_source, annotation_version = annotation_version, basecalling = basecalling, bioinformatics_workflow = bioinformatics_workflow, experiment = experiment)
+      kmer_analysis(all_ranges[[1]], fasta_file, paste(output_name,'Supported_kmers.bedrmod', sep='_'), FALSE, annotation, TRUE, color_beds, methods_name, bedRmod = TRUE, bed_data = all_kmers[[1]], coverage_data = coverage_data, organism = organism, assembly = assembly, annotation_source = annotation_source, annotation_version = annotation_version, basecalling = basecalling, bioinformatics_workflow = bioinformatics_workflow, experiment = experiment, strand = strand)
 
       #Plot NanoConsensus score across transcripts:
       Nanoconsensus_plotting(all_kmers[[1]], all_ranges[[1]], output_name, barplot_4soft, initial_position, final_position, annotation, ablines)
