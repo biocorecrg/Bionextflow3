@@ -98,63 +98,50 @@ create_genes_boxplots(dds, args$Gene_list, groups, desc, prefix = "", colors = b
 
 ################################## BATCH effect removal ##################################
 
-if (args$add_batch != "") {
-    if (grepl("batch", args$Assay_field)) {
-        stop("ERROR DO NOT PUT THE BATCH AS CONTROLLING FACTOR!!!")
-        
-    }
-	# if (args$add_batch == "limma"){
-	# 	mat<-assay(vsd)
-	# 	mm <- model.matrix(as.formula(args$Assay_field), colData(vsd))
-	# 	mat <- limma::removeBatchEffect(mat, batch=vsd$batch, design=mm)
-	# 	assay(vsd) <- mat
+if (args$add_batch & ("batch" %in% colnames(colData(dds)))) {
+	print("Using batch column to remove batch effect with Combat-seq")
+	if (grepl("batch", args$Assay_field)) {
+		print("ERROR DO NOT PUT THE BATCH AS CONTROLLING FACTOR!!!")}
 
-	# 	create_pca_data(vsd, condition, args$Number_principal_components, "batch_PCA", pca_colors)
+	# Raw counts
+	mat <- counts(dds)
 
-	# } 
-	if (args$add_batch) {
-		# Raw counts
-		mat <- counts(dds)
+	# Batch variable
+	batch <- colData(dds)$batch
 
-		# Batch variable
-		batch <- colData(dds)$batch
+	# Biological condition to preserve
+	#group <- colData(dds)$condition
 
-		# Biological condition to preserve
-		#group <- colData(dds)$condition
+	# Run ComBat_seq
+	mat_corrected <- ComBat_seq(
+	counts = mat,
+	batch = batch)
 
-		# Run ComBat_seq
-		mat_corrected <- ComBat_seq(
-		counts = mat,
-		batch = batch)
+	dds <- DESeqDataSetFromMatrix(countData = mat_corrected, colData = colData(dds), design =as.formula(args$Assay_field))
 
-		dds <- DESeqDataSetFromMatrix(countData = mat_corrected, colData = colData(dds), design =as.formula(args$Assay_field))
+	# Recalculate VST
+	se2 <- DESeq(dds)
+	vsd <- makeVST(se2, FALSE)
 
-		# Recalculate VST
-		se2 <- DESeq(dds)
-		vsd <- makeVST(se2, FALSE)
+	##### PCA for the counts with batch effect removal
+	
+	batch_pca <- create_pca_data(vsd, condition, args$Number_principal_components, pca_colors)
+	write.table(batch_pca$data, file=paste0("batch_PCA_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
+	write.table(batch_pca$variance, file=paste0("batch_PCA_variance.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
 
-		##### PCA for the counts with batch effect removal
-		
-		batch_pca <- create_pca_data(vsd, condition, args$Number_principal_components, pca_colors)
-		write.table(batch_pca$data, file=paste0("batch_PCA_data.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
-		write.table(batch_pca$variance, file=paste0("batch_PCA_variance.tsv"), sep="\t", quote=FALSE, row.names=FALSE)
+	##### Sample CLustering table
 
-		##### Sample CLustering table
-
-		sample_clustering_matrix <- sample_clustering(vsd)
-		write.table(sample_clustering_matrix, file="batch_Sample_Clustering_matrix.tsv", sep="\t", quote=FALSE, row.names=TRUE, col.names=NA)
+	sample_clustering_matrix <- sample_clustering(vsd)
+	write.table(sample_clustering_matrix, file="batch_Sample_Clustering_matrix.tsv", sep="\t", quote=FALSE, row.names=TRUE, col.names=NA)
 
 
-		####### Gene list expression boxplots for vst and log2(deseq-normalized)
+	####### Gene list expression boxplots for vst and log2(deseq-normalized)
 
-		if (args$Desc_genes != "" & args$Gene_list != "") {
+	if (args$Desc_genes != "" & args$Gene_list != "") {
 
-			create_genes_boxplots(dds, args$Gene_list, groups, desc, prefix = "batch", colors = boxplot_colors, condition = condition)
-		}
-
-
-
+		create_genes_boxplots(dds, args$Gene_list, groups, desc, prefix = "batch", colors = boxplot_colors, condition = condition)
 	}
+
 
 
 }
