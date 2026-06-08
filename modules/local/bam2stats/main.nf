@@ -19,7 +19,10 @@ process BAM2STATS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-        bam2stats.py ${bamfile} > ${prefix}.stat
+        if [ "${bamfile}" != "${prefix}.${bamfile.extension}" ]; then
+            ln -s ${bamfile} ${prefix}.${bamfile.extension}
+        fi
+        bam2stats.py ${prefix}.${bamfile.extension} > ${prefix}.stat
     """
 
 }
