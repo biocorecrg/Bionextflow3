@@ -82,6 +82,6 @@ process PBMM2_ALIGN {
     tuple val(meta), path("*.cram"), optional: true, emit: cram
     tuple val(meta), path("*.bam.bai"), optional: true, emit: index
     tuple val(meta), path("*.cram.crai"), optional: true, emit: index_cram
-    tuple val("${task.process}"), val("pbmm2"), eval("pbmm2 --version"), topic: versions, emit: versions
+    tuple val("${task.process}"), val("pbmm2"), eval("pbmm2 --version | head -n 1"), topic: versions, emit: versions
     tuple val("${task.process}"), val("samtools"), eval("samtools version | sed '1!d;s/.* //'"), topic: versions, emit: versions_samtools
 }

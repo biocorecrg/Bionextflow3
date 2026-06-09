@@ -32,6 +32,6 @@ process PBMM2_INDEX {
 
     output:
     tuple val(meta), path("*.mmi"), emit: index
-    tuple val("${task.process}"), val("pbmm2"), eval("pbmm2 --version"), topic: versions, emit: versions
+    tuple val("${task.process}"), val("pbmm2"), eval("pbmm2 --version | head -n 1"), topic: versions, emit: versions
     tuple val("${task.process}"), val("samtools"), eval("samtools version | sed '1!d;s/.* //'"), topic: versions, emit: versions_samtools
 }
