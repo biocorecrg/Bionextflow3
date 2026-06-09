@@ -1,0 +1,68 @@
+name: pbmm2_align
+description: PacBio minimap2 wrapper for aligning PacBio reads to a reference genome
+keywords:
+  - align
+  - pacbio
+  - bam
+  - fasta
+  - fastq
+  - reference
+tools:
+  - pbmm2:
+      description: |
+        A minimap2 wrapper for PacBio data.
+      homepage: https://github.com/PacificBiosciences/pbmm2
+      documentation: https://github.com/PacificBiosciences/pbmm2
+      licence: ["BSD-3-Clause-Clear"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - reads:
+        type: file
+        description: |
+          List of input PacBio BAM, FASTQ, or FASTA files.
+        ontologies: []
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing reference information
+          e.g. [ id:'test_ref']
+    - reference:
+        type: file
+        description: |
+          Reference database in FASTA, MMI, or XML format.
+        ontologies: []
+output:
+  - bam:
+      - - meta:
+            type: map
+            description: |
+              Groovy Map containing sample information
+              e.g. [ id:'test', single_end:false ]
+        - "*.bam":
+            type: file
+            description: Aligned BAM file
+            pattern: "*.bam"
+            ontologies: []
+  - index:
+      - - meta:
+            type: map
+            description: |
+              Groovy Map containing sample information
+              e.g. [ id:'test', single_end:false ]
+        - "*.bam.bai":
+            type: file
+            description: BAM alignment index file (optional)
+            pattern: "*.bam.bai"
+            ontologies: []
+  - versions:
+      - - versions.yml:
+            type: file
+            description: File containing software versions
+            pattern: "versions.yml"
+authors:
+  - "@lcozzuto"

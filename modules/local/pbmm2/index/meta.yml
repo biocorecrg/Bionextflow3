@@ -1,0 +1,32 @@
+name: pbmm2_index
+description: Index a reference genome for PacBio alignment using pbmm2
+keywords:
+  - index
+  - reference
+  - pacbio
+  - mmi
+tools:
+  - pbmm2:
+      description: |
+        A minimap2 wrapper for PacBio data.
+      homepage: https://github.com/PacificBiosciences/pbmm2
+      documentation: https://github.com/PacificBiosciences/pbmm2
+      licence: ["BSD-3-Clause-Clear"]
+      identifier: ""
+input:
+  - fasta:
+      type: file
+      description: Reference genome FASTA file
+output:
+  - index:
+      - "*.mmi":
+          type: file
+          description: pbmm2 index file
+          pattern: "*.mmi"
+  - versions:
+      - - versions.yml:
+            type: file
+            description: File containing software versions
+            pattern: "versions.yml"
+authors:
+  - "@lcozzuto"
