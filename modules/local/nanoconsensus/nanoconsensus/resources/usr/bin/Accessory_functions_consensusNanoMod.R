@@ -736,7 +736,10 @@ nearest_distance_mod <- function(all_ranges, annotation) {
     single_distance <- c()
     single_mods <- c()
     within <- FALSE
-
+    
+    #Skip if annotation is empty for this specific chr:
+    if (nrow(annotation) == 0) next
+    
     #Loop through all the annotated positions:
     for (j in 1:nrow(annotation)){
       annotated_position <- as.numeric(annotation[j,3])
@@ -764,6 +767,7 @@ nearest_distance_mod <- function(all_ranges, annotation) {
       }
 
     }
+
     distance <- c(distance, unique(single_distance))
     mods <- c(mods, str_c(single_mods, collapse = ","))
 

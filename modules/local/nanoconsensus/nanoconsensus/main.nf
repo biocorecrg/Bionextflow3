@@ -18,6 +18,7 @@ process NANOCONSENSUS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: meta.id
+    def bed_opt = mod_annotation ? "--bed ${mod_annotation}" : ''
 
     """
 	NanoConsensus.R -Epi_Sample ${Epi_Sample} \
@@ -27,7 +28,7 @@ process NANOCONSENSUS {
 	-chr ${chrName} \
 	-ini_pos ${chrStart} -fin_pos ${chrEnd} \
 	-output ${prefix} \
-	-fasta ${reference} --bed ${mod_annotation} \
+	-fasta ${reference} ${bed_opt} \
     --strand ${strand} --MZS_thr ${zscore_thr} --NC_thr ${ncscore_thr} ${args}
     """
 
