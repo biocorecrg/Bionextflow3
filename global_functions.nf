@@ -357,3 +357,25 @@ def subsetReads(reads, subset_num) {
 
     return (canonicalToMeta(tuples))
 }
+
+def renameSamples(desc_file, input_channel) {
+    def barcodes = channel
+        .fromPath(desc_file, checkIfExists: true)
+        .splitCsv(header: true, sep: '\t')
+        .map { row ->
+            [row.file, row.replicate]
+        }
+    
+    def mapped_channel = input_channel.map { meta, files ->
+        [meta.id, meta, files]
+    }
+
+    def renamed = barcodes
+        .join(mapped_channel, by: 0)
+        .map { id, replicate, meta, files ->
+            def new_meta = meta.clone()
+            new_meta.id = replicate
+            [new_meta, files]
+        }
+    return renamed
+}
