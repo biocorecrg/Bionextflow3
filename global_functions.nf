@@ -120,8 +120,7 @@ def make_yaml_methods(mymap, toplevel) {
             v.each { k2, v2 ->
                 flattenedMap[k2] = v2
             }
-        }
-        else {
+        } else {
             flattenedMap[k] = v
         }
     }
@@ -149,7 +148,7 @@ def emptyMeta() {
 
 def makeSoftwareVersionYamlFile(ch_versions) {
     def ch_collated_versions = softwareVersionsToYAML(ch_versions)
-        .map { yaml_str ->
+        .map { yaml_str -> 
             def yaml = new org.yaml.snakeyaml.Yaml()
             return yaml.load(yaml_str)
         }
@@ -262,7 +261,7 @@ def fromStringToNFCoreSeqs(input_string, parseid = false, mytype = "file") {
     def myseqs = channel.of()
     def mypars = channel.of()
 
-    if (input_string && input_string.contains("{") && input_string.contains(",") && input_string.contains("}")) {
+    if (input_string.contains("{") && input_string.contains(",") && input_string.contains("}")) {
         myseqs = channel.fromFilePairs(input_string, checkIfExists: true, type: mytype)
             .map { [[id: it[0], single_end: false], it[1]] }
     }
@@ -297,9 +296,7 @@ def fromNFcoreToValueChannel(input_channel) {
 def addPrefixToFiles(input_nf_ch, prefix) {
     def output_nf_ch = []
     output_nf_ch = input_nf_ch.map { meta, files ->
-        def new_meta = meta.clone()
-        new_meta.id = "${new_meta.id}${prefix}"
-        [new_meta, files]
+        [[id: "${meta.id}${prefix}", single_end: meta.single_end], files]
     }
     return (output_nf_ch)
 }
@@ -331,7 +328,7 @@ def flattenToTuple(input_ch) {
 // remove the metamap from a channel
 def canonicalToMeta(input_ch) {
     def nfcore_ch = input_ch.map { id, files ->
-        if (files.size() >= 2) {
+        if (files.size() == 2) {
             [[id: id, single_end: false], files]
         }
         else {
@@ -356,26 +353,4 @@ def subsetReads(reads, subset_num) {
     def tuples = flattenToTuple(splitted)
 
     return (canonicalToMeta(tuples))
-}
-
-def renameSamples(desc_file, input_channel) {
-    def barcodes = channel
-        .fromPath(desc_file, checkIfExists: true)
-        .splitCsv(header: true, sep: '\t')
-        .map { row ->
-            [row.file, row.replicate]
-        }
-    
-    def mapped_channel = input_channel.map { meta, files ->
-        [meta.id, meta, files]
-    }
-
-    def renamed = barcodes
-        .join(mapped_channel, by: 0)
-        .map { id, replicate, meta, files ->
-            def new_meta = meta.clone()
-            new_meta.id = replicate
-            [new_meta, files]
-        }
-    return renamed
 }
