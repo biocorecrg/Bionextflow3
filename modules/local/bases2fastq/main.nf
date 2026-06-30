@@ -11,7 +11,7 @@ process BASES2FASTQ {
     tuple val(meta), path(run_manifest), path(run_dir)
 
     output:
-    tuple val(meta), path('*/Project_*/**/*_R*.fastq.gz')        , emit: sample_fastq
+    tuple val(meta), path('*/Project_*/**/*_[RI]*.fastq.gz')        , emit: sample_fastq
     tuple val(meta), path('*/Project_*/**/*_stats.json')         , emit: sample_json
     tuple val(meta), path('*/*.html')                            , emit: qc_report
     tuple val(meta), path('*/RunStats.json')                     , emit: run_stats
