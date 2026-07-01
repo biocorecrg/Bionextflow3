@@ -377,5 +377,6 @@ def renameSamples(desc_file, input_channel) {
             new_meta.id = replicate
             [new_meta, files]
         }
+        .ifEmpty { error "No samples matched the description file. Please verify that the 'file' column in your description matches the sample names in the reads path." }
     return renamed
 }
