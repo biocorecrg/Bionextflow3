@@ -2,37 +2,37 @@ process ANNOTATE_SHORTSTACK {
     tag "${meta.id}"
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'community.wave.seqera.io/library/bedtools_pip_grep:fe694158e08503cb':
-        'community.wave.seqera.io/library/bedtools_pip_grep:fe694158e08503cb' }"
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'community.wave.seqera.io/library/bedtools_pip_grep:fe694158e08503cb'
+        : 'community.wave.seqera.io/library/bedtools_pip_grep:fe694158e08503cb'}"
 
     input:
     tuple val(meta), path(short_res)
     tuple val(meta2), path(short_counts)
-    path(annotation)
-    val(strand)
-
-    output:
-    tuple val(meta), path("annotated_counts.txt.gz")            , emit: annotated_counts
-    tuple val("${task.process}"), val('bedtools'), eval('bedtools --version | sed "s/^bedtools//g"'), topic: versions, emit: versions
+    path annotation
+    val strand
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args          = task.ext.args ?: ''
-    def bedopt        = ""
+    def args = task.ext.args ?: ''
+    def bedopt = ""
     if (strand == "stranded") {
-    	bedopt        = "-s"
+        bedopt = "-s"
+    }
+    else if (strand == "reverse") {
+        bedopt = "-S"
     }
 
     if ("${annotation}".endsWith(".gz")) {
         exec = "zcat ${annotation}"
-    } else {
+    }
+    else {
         exec = "cat ${annotation}"
     }
 
-    def prefix        = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
        ${exec} > mygenes.gtf
@@ -45,4 +45,7 @@ process ANNOTATE_SHORTSTACK {
 
     """
 
+    output:
+    tuple val(meta), path("annotated_counts.txt.gz"), emit: annotated_counts
+    tuple val("${task.process}"), val('bedtools'), eval('bedtools --version | sed "s/^bedtools//g"'), topic: versions, emit: versions
 }

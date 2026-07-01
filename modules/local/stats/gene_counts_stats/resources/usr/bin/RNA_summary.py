@@ -23,7 +23,7 @@ if args.biotype:
 elif experiment == "rnaseq":
     biotypes = ["protein_coding", "lncRNA","rRNA"]
 else:
-    biotypes = ["miRNA","snoRNA","rRNA","protein-coding","intergenic"] 
+    biotypes = ["miRNA","snoRNA","rRNA","protein_coding","intergenic"] 
 
 # --- check files exist ---
 for f in [desc_file, annotated_file]:
@@ -43,14 +43,40 @@ sample_names = desc_df.iloc[0:, 0].tolist()  # skip header
 
 anno_df = pd.read_csv(annotated_file, sep=",")
 
-# Normalize repeated values in the gene.type column (e.g., 'miRNA,miRNA,miRNA' -> 'miRNA')
+# Normalize gene.type column:
+# 1. intron-* types are collapsed to "intron"
+# 2. When mixing feature + intron, the feature always wins
+# 3. For smallRNA experiments: smallRNA types beat protein_coding
+# 4. Deduplicate remaining types
+SMALL_RNA_TYPES = {"miRNA", "snoRNA", "snRNA", "piRNA"}
+
 def normalize_gene_type(val):
     if pd.isna(val):
         return val
-    parts = str(val).split(",")
-    if len(parts) > 1 and all(p == parts[0] for p in parts):
-        return parts[0]
-    return val
+    parts = [p.strip() for p in str(val).split(",")]
+
+    # Collapse intron-* to "intron"
+    normalized = ["intron" if p.startswith("intron-") else p for p in parts]
+
+    # Deduplicate while preserving order
+    unique = list(dict.fromkeys(normalized))
+
+    # If mix of intron and non-intron features, drop intron (feature wins)
+    non_intron = [u for u in unique if u != "intron"]
+    if non_intron and "intron" in unique:
+        unique = non_intron
+
+    # For smallRNA experiments: smallRNA types take priority over protein_coding
+    if experiment != "rnaseq" and "protein_coding" in unique:
+        small_rnas = [u for u in unique if u in SMALL_RNA_TYPES]
+        if small_rnas:
+            unique = [u for u in unique if u != "protein_coding"]
+
+    if len(unique) == 1:
+        return unique[0]
+
+    # Still ambiguous (multiple different features)
+    return ",".join(unique)
 
 anno_df["gene.type"] = anno_df["gene.type"].apply(normalize_gene_type)
 
