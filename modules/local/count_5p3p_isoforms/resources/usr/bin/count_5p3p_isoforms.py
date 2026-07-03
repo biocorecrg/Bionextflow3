@@ -7,8 +7,8 @@ Uses known_miRNAs.gff3 from ShortStack for miRNA coordinates and names
 Reads the XW:i tag from condensed BAMs for true read abundance.
 Reads must not be larger than the miRNA length plus one base.
 
-Outputs a single matrix with Chr, Start, End, Strand, miRNA,
-followed by 5p and 3p counts for each sample.
+Outputs a single matrix with miRNA, followed by 5p and 3p fractions
+(A/(A+B) and B/(A+B)) for each sample.
 """
 
 import pysam
@@ -133,16 +133,6 @@ def get_sample_name(bam_path):
     return name
 
 
-def chrom_key(chrom):
-    """Sorting key helper for sorting chromosome names naturally/numerically."""
-    # Strip common prefixes like 'Chr' or 'chr' case-insensitively
-    clean_chrom = re.sub(r'^[Cc]hr', '', chrom)
-    try:
-        return (0, int(clean_chrom))
-    except ValueError:
-        return (1, chrom)
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Count reads per known miRNA isoform from ShortStack condensed BAMs"
@@ -157,7 +147,7 @@ def main():
     )
     parser.add_argument(
         "--output", required=True,
-        help="Output TSV count matrix"
+        help="Output TSV fraction matrix"
     )
     parser.add_argument(
         "--strandness", default="stranded",
@@ -173,48 +163,19 @@ def main():
     if not regions:
         # No miRNAs found, write empty output with header only
         with open(args.output, 'w') as f:
-            f.write("Chr\tStart\tEnd\tStrand\tmiRNA\n")
+            f.write("miRNA\n")
         return
 
-    # Identify paired miRNAs per chrom/strand
-    base_to_groups = defaultdict(lambda: defaultdict(lambda: {'5p': [], '3p': []}))
+    # Identify paired miRNAs globally
+    base_to_arms = defaultdict(set)
     for r in regions:
         name = r['name']
-        chrom = r['chrom']
-        strand = r['strand']
         if name.endswith('-5p'):
-            base = name[:-3]
-            base_to_groups[base][(chrom, strand)]['5p'].append(r)
+            base_to_arms[name[:-3]].add('5p')
         elif name.endswith('-3p'):
-            base = name[:-3]
-            base_to_groups[base][(chrom, strand)]['3p'].append(r)
+            base_to_arms[name[:-3]].add('3p')
 
-    pairs = []
-    for base, groups in base_to_groups.items():
-        for (chrom, strand), arm_dict in groups.items():
-            list_5p = sorted(arm_dict['5p'], key=lambda x: x['start'])
-            list_3p = sorted(arm_dict['3p'], key=lambda x: x['start'])
-            
-            # Pair them up in order of start coordinate
-            n_pairs = min(len(list_5p), len(list_3p))
-            for i in range(n_pairs):
-                r5 = list_5p[i]
-                r3 = list_3p[i]
-                # Locus coordinates span both arms
-                locus_start = min(r5['start'], r3['start'])
-                locus_end = max(r5['end'], r3['end'])
-                pairs.append({
-                    'chrom': chrom,
-                    'start': locus_start,
-                    'end': locus_end,
-                    'strand': strand,
-                    'name': base,
-                    'r5p': r5,
-                    'r3p': r3
-                })
-
-    # Sort pairs by chromosome and start position
-    pairs = sorted(pairs, key=lambda x: (chrom_key(x['chrom']), x['start']))
+    paired_miRNAs = sorted([base for base, arms in base_to_arms.items() if '5p' in arms and '3p' in arms])
 
     # Count reads per sample
     sample_names = []
@@ -226,22 +187,37 @@ def main():
         sample_counts[sample_name] = count_reads_in_bam(bam_file, regions, args.strandness)
 
     # Write output matrix
-    # Format: Chr, Start, End, Strand, miRNA, sample1_5p, sample1_3p, sample2_5p, sample2_3p, ...
+    # Format: miRNA, sample1_5p, sample1_3p, sample2_5p, sample2_3p, ...
     with open(args.output, 'w', newline='') as f:
         writer = csv.writer(f, delimiter='\t')
-        header = ['Chr', 'Start', 'End', 'Strand', 'miRNA']
+        header = ['miRNA']
         for sample in sample_names:
             header.extend([f"{sample}_5p", f"{sample}_3p"])
         writer.writerow(header)
 
-        for p in pairs:
-            row = [p['chrom'], p['start'], p['end'], p['strand'], p['name']]
-            key_5p = (p['chrom'], p['r5p']['start'], p['r5p']['end'], p['r5p']['name'])
-            key_3p = (p['chrom'], p['r3p']['start'], p['r3p']['end'], p['r3p']['name'])
+        for base in paired_miRNAs:
+            row = [base]
             for sample in sample_names:
-                count_5p = sample_counts[sample].get(key_5p, 0)
-                count_3p = sample_counts[sample].get(key_3p, 0)
-                row.extend([count_5p, count_3p])
+                # Sum all coordinates for base-5p globally
+                sum_5p = sum(
+                    val for r_key, val in sample_counts[sample].items()
+                    if r_key[3] == f"{base}-5p"
+                )
+                # Sum all coordinates for base-3p globally
+                sum_3p = sum(
+                    val for r_key, val in sample_counts[sample].items()
+                    if r_key[3] == f"{base}-3p"
+                )
+
+                total = sum_5p + sum_3p
+                if total > 0:
+                    prop_5p = round(sum_5p / total, 4)
+                    prop_3p = round(sum_3p / total, 4)
+                else:
+                    prop_5p = 0.0
+                    prop_3p = 0.0
+
+                row.extend([prop_5p, prop_3p])
             writer.writerow(row)
 
 
