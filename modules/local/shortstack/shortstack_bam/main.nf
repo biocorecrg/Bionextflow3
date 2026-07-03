@@ -15,11 +15,12 @@ process SHORTSTACK_FROM_BAM {
     path(micros)
 
     output:
-    tuple val(meta), path("shortstack_output")                      , emit: output_folder
-    tuple val(meta), path("shortstack_output/merged.bam")           , emit: bams
-    tuple val(meta), path("shortstack_output/merged.bam.csi")       , emit: indexes
-    tuple val(meta), path("shortstack_output/Counts.txt")           , emit: counts
-    tuple val(meta), path("shortstack_output/Results.txt")          , emit: results_txt
+    tuple val(meta), path("shortstack_output")                                       , emit: output_folder
+    tuple val(meta), path("shortstack_output/merged.bam")                            , emit: bams
+    tuple val(meta), path("shortstack_output/merged.bam.csi")                        , emit: indexes
+    tuple val(meta), path("shortstack_output/Counts.txt")                            , emit: counts
+    tuple val(meta), path("shortstack_output/Results.txt")                           , emit: results_txt
+    tuple val(meta), path("shortstack_output/known_miRNAs.gff3"), optional: true     , emit: known_mirnas
     tuple val("${task.process}"), val('shortstack'), eval('ShortStack --version | sed "s/^ShortStack//g"'), topic: versions, emit: versions
 
     when:
