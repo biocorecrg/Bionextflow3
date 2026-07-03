@@ -10,7 +10,7 @@ def parse_bed_to_tsv(bed_gz_file, tsv_file):
 
     with gzip.open(bed_gz_file, 'rt') as bed, open(tsv_file, 'w', newline='') as tsv:
         writer = csv.writer(tsv, delimiter='\t', lineterminator='\n')
-        annotation_headers = ["Chr", "Start", "End", "Name", "Score", "Strand",
+        annotation_headers = ["Chr", "Start", "End", "Name", "Score", "Strand", "known_miRNAs",
                               "gene.id", "gene.name", "gene.type"]
         annotations   = {}
         writer.writerow(annotation_headers)  # Keep sample columns
@@ -23,10 +23,10 @@ def parse_bed_to_tsv(bed_gz_file, tsv_file):
 
             # Process BED entry
             fields = line.strip().split("\t")
-            chrom, start, end, name, score, strand = fields[:6]
-            annotations[name] = "\t".join(fields[:6])
+            chrom, start, end, name, score, strand, known_mirnas = fields[:7]
+            annotations[name] = "\t".join(fields[:7])
             # Kind of GTF anno that is overlapping
-            annotype = fields[8]
+            annotype = fields[9]
             # Extract info field
             info = fields[-1]
 

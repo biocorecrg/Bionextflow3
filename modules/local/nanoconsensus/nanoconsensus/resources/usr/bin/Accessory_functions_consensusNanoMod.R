@@ -833,7 +833,7 @@ write_bedRmod_output <- function(all_ranges, output_name, bed_data = NULL, annot
       # Case: Range overlaps with annotation(s)
       # Process each overlapping annotation separately
       for (ann_row in 1:nrow(overlapping_annotation)) {
-        ann_pos <- as.numeric(overlapping_annotation[ann_row, 3])
+        ann_pos <- as.numeric(overlapping_annotation[ann_row, 2])
         ann_mod_name <- overlapping_annotation[ann_row, 4]
         collected_mod_names <- c(collected_mod_names, ann_mod_name)
 
