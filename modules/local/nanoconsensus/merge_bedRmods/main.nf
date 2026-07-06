@@ -14,12 +14,15 @@ process MERGE_BEDRMODS {
 
     script:
     def prefix = task.ext.prefix ?: meta.id
+    def software = meta.software ?: ''
+    def filename = task.ext.args ?: 'supported_kmers'
+    def out_name = software ? "${prefix}_${software}_${filename}" : "${prefix}_${filename}"
 
     """
-	concatenate_bedrmod.R ${bedrmods_files} ${prefix}_supported_kmers.bedrmod
+	concatenate_bedrmod.R ${bedrmods_files} ${out_name}
     """
 
     output:
-    tuple val(meta), path("*_supported_kmers.bedrmod"), emit: results
+    tuple val(meta), path("${task.ext.prefix ?: meta.id}${meta.software ? '_' + meta.software : ''}_${task.ext.args ?: 'supported_kmers'}.*"), emit: results, optional: true
     tuple val("${task.process}"), val("merge_bedrmods"), eval("echo 1.0"), topic: versions
 }
