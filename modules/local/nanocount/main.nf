@@ -9,6 +9,7 @@ process NANOCOUNT {
 
     input:
     tuple val(meta), path(input), path(index)
+    tuple val(meta2), path(reference)
 
     output:
     tuple val(meta), path("*.txt"), emit: txt
