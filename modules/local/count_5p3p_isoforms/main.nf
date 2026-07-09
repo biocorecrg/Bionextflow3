@@ -16,10 +16,11 @@ process COUNT_5P3P_ISOFORMS {
     count_5p3p_isoforms.py \
         --gff3 ${known_mirnas_gff3} \
         --bams ${bams} \
-        --output isoform_counts.tsv \
+        --output isoform_prop.tsv \
+        --output-counts isoform_reads.tsv \
         ${args}
     """
 
     output:
-    tuple val(meta), path("isoform_counts.tsv"), emit: isoform_counts
+    tuple val(meta), path("isoform_prop.tsv"), path("isoform_reads.tsv"), emit: isoform_counts
 }

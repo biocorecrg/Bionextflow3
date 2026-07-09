@@ -25,7 +25,8 @@ def parse_gff3(gff3_file):
     Returns:
         regions: list of dict of {chrom, start, end, strand, name}
     """
-    regions = []
+    coord_to_names = defaultdict(list)
+    seen_coords = []
 
     with open(gff3_file, 'r') as f:
         for line in f:
@@ -48,13 +49,24 @@ def parse_gff3(gff3_file):
                     name = attr.split('=', 1)[1]
 
             if name:
-                regions.append({
-                    'chrom': chrom,
-                    'start': start,
-                    'end': end,
-                    'strand': strand,
-                    'name': name
-                })
+                coord = (chrom, start, end, strand)
+                if coord not in coord_to_names:
+                    seen_coords.append(coord)
+                if name not in coord_to_names[coord]:
+                    coord_to_names[coord].append(name)
+
+    regions = []
+    for coord in seen_coords:
+        chrom, start, end, strand = coord
+        names_list = coord_to_names[coord]
+        merged_name = ",".join(names_list)
+        regions.append({
+            'chrom': chrom,
+            'start': start,
+            'end': end,
+            'strand': strand,
+            'name': merged_name
+        })
 
     return regions
 
@@ -150,6 +162,10 @@ def main():
         help="Output TSV fraction matrix"
     )
     parser.add_argument(
+        "--output-counts",
+        help="Optional output TSV file for raw read counts"
+    )
+    parser.add_argument(
         "--strandness", default="stranded",
         choices=["stranded", "reverse", "unstranded"],
         help="Strand specificity mode for matching reads to miRNAs"
@@ -164,16 +180,19 @@ def main():
         # No miRNAs found, write empty output with header only
         with open(args.output, 'w') as f:
             f.write("miRNA\n")
+        if args.output_counts:
+            with open(args.output_counts, 'w') as f:
+                f.write("miRNA\n")
         return
 
     # Identify paired miRNAs globally
     base_to_arms = defaultdict(set)
     for r in regions:
-        name = r['name']
-        if name.endswith('-5p'):
-            base_to_arms[name[:-3]].add('5p')
-        elif name.endswith('-3p'):
-            base_to_arms[name[:-3]].add('3p')
+        for name in r['name'].split(','):
+            if name.endswith('-5p'):
+                base_to_arms[name[:-3]].add('5p')
+            elif name.endswith('-3p'):
+                base_to_arms[name[:-3]].add('3p')
 
     paired_miRNAs = sorted([base for base, arms in base_to_arms.items() if '5p' in arms and '3p' in arms])
 
@@ -201,12 +220,12 @@ def main():
                 # Sum all coordinates for base-5p globally
                 sum_5p = sum(
                     val for r_key, val in sample_counts[sample].items()
-                    if r_key[3] == f"{base}-5p"
+                    if f"{base}-5p" in r_key[3].split(',')
                 )
                 # Sum all coordinates for base-3p globally
                 sum_3p = sum(
                     val for r_key, val in sample_counts[sample].items()
-                    if r_key[3] == f"{base}-3p"
+                    if f"{base}-3p" in r_key[3].split(',')
                 )
 
                 total = sum_5p + sum_3p
@@ -219,6 +238,26 @@ def main():
 
                 row.extend([prop_5p, prop_3p])
             writer.writerow(row)
+
+    # Write raw counts matrix if requested
+    if args.output_counts:
+        all_miRNAs = sorted(list(set(r['name'] for r in regions)))
+        with open(args.output_counts, 'w', newline='') as f:
+            writer = csv.writer(f, delimiter='\t')
+            header = ['miRNA'] + sample_names
+            writer.writerow(header)
+
+            for name in all_miRNAs:
+                # Format row name: replace -5p / -3p with _5p / _3p
+                row_name = name.replace('-5p', '_5p').replace('-3p', '_3p')
+                row = [row_name]
+                for sample in sample_names:
+                    total_count = sum(
+                        val for r_key, val in sample_counts[sample].items()
+                        if r_key[3] == name
+                    )
+                    row.append(total_count)
+                writer.writerow(row)
 
 
 if __name__ == "__main__":
