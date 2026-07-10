@@ -2,7 +2,7 @@ process FASTQ_SPLIT_BY_BARCODE {
     tag "$meta.id"
     label 'gpu'
 
-    container "docker://lpryszcz/seqtagger:2.0a"
+    container "docker://lpryszcz/seqtagger:2.1a"
 
     input:
 	tuple val(meta), path(demux), path(fastq) 	
