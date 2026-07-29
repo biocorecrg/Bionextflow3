@@ -11,6 +11,7 @@ process SAMTOOLS_SORT {
     tuple val(meta), path(bam)
     tuple val(meta2), path(fasta)
     val index_format
+    val subsample
 
     when:
     task.ext.when == null || task.ext.when
@@ -46,10 +47,17 @@ process SAMTOOLS_SORT {
         """
     }
 
+    def subsample_cmd = ""
+    if (subsample) {
+        subsample_cmd = """
+            samtools view -s ${subsample} -b - |
+        """
+    }
+
     """
     samtools cat \\
         ${bam} \\
-    | \\
+| ${subsample_cmd} \\
     samtools sort \\
         ${args} \\
         -T ${prefix} \\
