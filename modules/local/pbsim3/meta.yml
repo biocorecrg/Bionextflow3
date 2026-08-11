@@ -1,0 +1,50 @@
+name: pbsim3
+description: Simulator for PacBio and ONT long reads
+keywords:
+  - simulator
+  - long reads
+  - pacbio
+  - ont
+tools:
+  - pbsim3:
+      description: PBSIM3 is a simulator for PacBio and ONT long reads.
+      homepage: https://github.com/yukiteruono/pbsim3
+      documentation: https://github.com/yukiteruono/pbsim3
+      tool_dev_url: https://github.com/yukiteruono/pbsim3
+      licence: ["GPL-3.0-or-later"]
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing meta data
+          e.g. [ id:'test' ]
+    - genome:
+        type: file
+        description: FASTA genome sequence file to simulate reads from
+        pattern: "*.{fasta,fa,fasta.gz,fa.gz}"
+  - - meta2:
+        type: map
+        description: Groovy Map containing meta data
+    - method_file:
+        type: file
+        description: Model or FASTQ file for error modeling / quality scores
+  - - method:
+        type: string
+        description: Simulation method (quality_score, error_model, training)
+  - - depth:
+        type: integer
+        description: Depth (coverage) of sequencing to simulate
+output:
+  - fastq:
+      - - meta:
+            type: map
+            description: Groovy Map containing meta data
+        - "*.fastq":
+            type: file
+            description: Simulated long reads in FASTQ format
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+authors:
+  - "@lc"
