@@ -8,12 +8,14 @@ process PBSIM3 {
 
     input:
     tuple val(meta), path(genome)
-    tuple val(meta2), path(method_file), optional: true
+    tuple val(meta2), path(method_file)
     val sim_method
     val depth
 
     output:
-    tuple val(meta), path("*.fastq"), emit: fastq
+    tuple val(meta), path("*.fq.gz") , emit: fastq
+    tuple val(meta), path("*.maf.gz"), emit: maf
+    tuple val(meta), path("*.ref")   , emit: ref
     tuple val("${task.process}"), val("pbsim3"), eval("pbsim --version | head -n 1"), topic: versions, emit: versions
 
     when:
@@ -29,7 +31,9 @@ process PBSIM3 {
         error "Unknown sim_method '${sim_method}'. Must be one of: ${valid_methods.join(', ')}"
     }
     // Use the provided model file, or fall back to the one bundled in the container
-    def model_path = method_file ? method_file : "/usr/local/data/${sim_method.toUpperCase()}-RSII.model"
+    def model_path = (!method_file || (method_file instanceof List && method_file.isEmpty()))
+        ? "/usr/local/data/${sim_method.toUpperCase()}-RSII.model"
+        : method_file
     def method_arg = "--method ${sim_method} --${sim_method} ${model_path}"
 
     def fasta_name = genome.name.endsWith('.gz') ? genome.baseName : genome.name
