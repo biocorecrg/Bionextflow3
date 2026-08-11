@@ -8,7 +8,7 @@ process PBSIM3 {
 
     input:
     tuple val(meta), path(genome)
-    tuple val(meta2), path(method_file)
+    tuple val(meta2), path(method_file), optional: true
     val sim_method
     val depth
 
@@ -28,7 +28,9 @@ process PBSIM3 {
     if (!valid_methods.contains(sim_method)) {
         error "Unknown sim_method '${sim_method}'. Must be one of: ${valid_methods.join(', ')}"
     }
-    def method_arg = "--method ${sim_method} --${sim_method} ${method_file}"
+    // Use the provided model file, or fall back to the one bundled in the container
+    def model_path = method_file ? method_file : "/usr/local/data/${sim_method.toUpperCase()}-RSII.model"
+    def method_arg = "--method ${sim_method} --${sim_method} ${model_path}"
 
     def fasta_name = genome.name.endsWith('.gz') ? genome.baseName : genome.name
     def decompress_cmd = genome.name.endsWith('.gz') ? "gunzip -k ${genome}" : ''
