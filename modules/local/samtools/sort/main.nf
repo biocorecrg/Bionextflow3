@@ -47,24 +47,19 @@ process SAMTOOLS_SORT {
         """
     }
 
-    def subsample_cmd = ""
-    if (subsample) {
-        subsample_cmd = """
-            samtools view -s ${subsample} -b - |
-        """
-    }
+    def subsample_cmd = subsample ? "| samtools view -s ${subsample} -b - " : ""
 
     """
     samtools cat \\
         ${bam} \\
-| ${subsample_cmd} \\
-    samtools sort \\
-        ${args} \\
-        -T ${prefix} \\
-        --threads ${task.cpus} \\
-        ${reference} \\
-        -o ${output_file} \\
-        -
+        ${subsample_cmd} \\
+        | samtools sort \\
+            ${args} \\
+            -T ${prefix} \\
+            --threads ${task.cpus} \\
+            ${reference} \\
+            -o ${output_file} \\
+            -
     
     ${reheader_cmd}
     """
