@@ -3,7 +3,7 @@ process PBSIM3 {
     label 'process_high'
 
     container "${workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container
-        ? 'https://depot.galaxyproject.org/biocontainers/pbsim3:3.0.5--h9948957_2'
+        ? 'biocontainers/pbsim3:3.0.5--h9948957_2'
         : 'biocontainers/pbsim3:3.0.5--h9948957_2'}"
 
     input:
