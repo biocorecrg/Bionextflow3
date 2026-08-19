@@ -9,15 +9,16 @@ import re
 import llama_cpp
 
 
-def estimate_tokens(text):
-    """Rough token estimate: ~4 chars per token"""
-    return len(text) // 4
+def estimate_tokens(text, chars_per_token=2):
+    """Rough token estimate. Default: ~2 chars per token (conservative for BPE tokenizers
+    on data-dense inputs like VCF). Use chars_per_token=4 for natural-language text."""
+    return len(text) // chars_per_token
 
 
 def chunk_text(text, max_tokens):
     """Split text into chunks by paragraphs/sections with hard size limit"""
     # Split by double newlines (paragraphs/sections)
-    sections = re.split(r'\n\n+', text)
+    sections = re.split(r"\n\n+", text)
 
     chunks = []
     current_chunk = []
@@ -28,7 +29,7 @@ def chunk_text(text, max_tokens):
 
         # If a SINGLE section exceeds max_tokens, split it by lines
         if section_tokens > max_tokens:
-            lines = section.split('\n')
+            lines = section.split("\n")
             temp_chunk = []
             temp_length = 0
 
@@ -39,9 +40,9 @@ def chunk_text(text, max_tokens):
                 if line_tokens > max_tokens:
                     chars_per_chunk = max_tokens * 4  # ~4 chars per token
                     for i in range(0, len(line), chars_per_chunk):
-                        chunk_piece = line[i:i+chars_per_chunk]
+                        chunk_piece = line[i : i + chars_per_chunk]
                         if current_chunk:
-                            chunks.append('\n\n'.join(current_chunk))
+                            chunks.append("\n\n".join(current_chunk))
                             current_chunk = []
                             current_length = 0
                         chunks.append(chunk_piece)
@@ -50,10 +51,10 @@ def chunk_text(text, max_tokens):
                 if temp_length + line_tokens > max_tokens:
                     if temp_chunk:
                         if current_chunk:
-                            chunks.append('\n\n'.join(current_chunk))
+                            chunks.append("\n\n".join(current_chunk))
                             current_chunk = []
                             current_length = 0
-                        chunks.append('\n'.join(temp_chunk))
+                        chunks.append("\n".join(temp_chunk))
                     temp_chunk = [line]
                     temp_length = line_tokens
                 else:
@@ -62,16 +63,16 @@ def chunk_text(text, max_tokens):
 
             if temp_chunk:
                 if current_chunk:
-                    chunks.append('\n\n'.join(current_chunk))
+                    chunks.append("\n\n".join(current_chunk))
                     current_chunk = []
                     current_length = 0
-                chunks.append('\n'.join(temp_chunk))
+                chunks.append("\n".join(temp_chunk))
             continue
 
         # Normal section handling
         if current_length + section_tokens > max_tokens:
             if current_chunk:
-                chunks.append('\n\n'.join(current_chunk))
+                chunks.append("\n\n".join(current_chunk))
             current_chunk = [section]
             current_length = section_tokens
         else:
@@ -80,7 +81,7 @@ def chunk_text(text, max_tokens):
 
     # Don't forget the last chunk
     if current_chunk:
-        chunks.append('\n\n'.join(current_chunk))
+        chunks.append("\n\n".join(current_chunk))
 
     return chunks
 
@@ -91,24 +92,25 @@ def chunk_by_semantic_sections(text, max_tokens):
     current_section = "General"
     current_content = []
 
-    for line in text.split('\n'):
+    for line in text.split("\n"):
         # Detect section headers
-        if re.match(r'^[A-Z][A-Za-z\s]{3,}:?\s*$', line.strip()) or \
-           re.match(r'^#+\s+[A-Z]', line.strip()):
+        if re.match(r"^[A-Z][A-Za-z\s]{3,}:?\s*$", line.strip()) or re.match(
+            r"^#+\s+[A-Z]", line.strip()
+        ):
             # Save previous section
             if current_content:
-                content_text = '\n'.join(current_content)
+                content_text = "\n".join(current_content)
                 if content_text.strip():
                     chunks[current_section] = content_text
             # Start new section
-            current_section = line.strip().rstrip(':').lstrip('#').strip()
+            current_section = line.strip().rstrip(":").lstrip("#").strip()
             current_content = []
         else:
             current_content.append(line)
 
     # Save last section
     if current_content:
-        content_text = '\n'.join(current_content)
+        content_text = "\n".join(current_content)
         if content_text.strip():
             chunks[current_section] = content_text
 
@@ -118,11 +120,13 @@ def chunk_by_semantic_sections(text, max_tokens):
         section_tokens = estimate_tokens(content)
 
         if section_tokens > max_tokens:
-            print(f"  Section '{section_name}' is too large ({section_tokens} tokens). Splitting...")
+            print(
+                f"  Section '{section_name}' is too large ({section_tokens} tokens). Splitting..."
+            )
             # Split this section into sub-chunks
             sub_chunks = chunk_text(content, max_tokens=max_tokens)
             for i, sub_chunk in enumerate(sub_chunks):
-                validated_chunks[f"{section_name} (part {i+1})"] = sub_chunk
+                validated_chunks[f"{section_name} (part {i + 1})"] = sub_chunk
         else:
             validated_chunks[section_name] = content
 
@@ -133,7 +137,7 @@ def process_with_llm(llm, prompt, temperature, max_tokens, system_prompt):
     """Helper to call LLM with a single prompt"""
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": prompt},
     ]
 
     response = llm.create_chat_completion(
@@ -168,7 +172,10 @@ def _infer_status_with_llm(llm, text):
     try:
         response = llm.create_chat_completion(
             messages=[
-                {"role": "system", "content": "Reply with exactly one word: PASS, WARN, or FAIL."},
+                {
+                    "role": "system",
+                    "content": "Reply with exactly one word: PASS, WARN, or FAIL.",
+                },
                 {"role": "user", "content": prompt},
             ],
             temperature=0.0,
@@ -198,7 +205,11 @@ def generate_html_output(reply, html_output, llm, sample_name="Sample"):
         stripped = line.strip().lstrip("-•* ").strip()
         if stripped:
             items_html.append(f"        <li>{html.escape(stripped)}</li>")
-    body_html = "\n".join(items_html) if items_html else f"        <li>{html.escape(reply.strip())}</li>"
+    body_html = (
+        "\n".join(items_html)
+        if items_html
+        else f"        <li>{html.escape(reply.strip())}</li>"
+    )
 
     html_content = f"""<div style="
     font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -259,7 +270,11 @@ def llamacpp_python(
     chunk_method="auto",
     chunk_fraction=0.5,  # Use 50% of context for each chunk by default
     input_threshold=0.75,  # Trigger chunking if input exceeds 75% of context
+    chunk_prompt=None,  # Prompt used for per-chunk processing; falls back to system_prompt if None
 ):
+    # Resolve effective chunk prompt: use chunk_prompt if provided, else fall back to system_prompt
+    effective_chunk_prompt = chunk_prompt if chunk_prompt else system_prompt
+
     # Read input text
     with open(messages_file, "r") as f:
         text = f.read()
@@ -272,16 +287,17 @@ def llamacpp_python(
         n_ctx=context_size,
         seed=seed,
         n_gpu_layers=n_gpu_layers,
-        verbose=False
+        verbose=False,
     )
     print("Model loaded successfully\n")
 
     # Calculate token budgets
     estimated_tokens = estimate_tokens(text)
     system_tokens = estimate_tokens(system_prompt)
+    chunk_prompt_overhead = estimate_tokens(effective_chunk_prompt)
 
-    # Reserve space for: system prompt + response + prompt template overhead (~300 tokens)
-    overhead = system_tokens + max_tokens + 300
+    # Reserve space for: system prompt + chunk prompt + response + prompt template overhead (~300 tokens)
+    overhead = system_tokens + chunk_prompt_overhead + max_tokens + 300
 
     # Maximum tokens we can use for input chunks
     max_chunk_tokens = int(context_size * chunk_fraction)
@@ -292,12 +308,16 @@ def llamacpp_python(
         print(f"⚠️  Adjusted chunk size to {max_chunk_tokens} tokens to fit overhead\n")
 
     print(f"Context size: {context_size} tokens")
-    print(f"Chunk budget: {max_chunk_tokens} tokens ({chunk_fraction*100:.0f}% of context)")
+    print(
+        f"Chunk budget: {max_chunk_tokens} tokens ({chunk_fraction * 100:.0f}% of context)"
+    )
     print(f"Input size: ~{estimated_tokens} tokens\n")
 
     # Check if chunking is needed
     if estimated_tokens > (context_size * input_threshold):
-        print(f"Input exceeds {input_threshold*100:.0f}% of context. Chunking enabled.\n")
+        print(
+            f"Input exceeds {input_threshold * 100:.0f}% of context. Chunking enabled.\n"
+        )
 
         # Choose chunking method
         if chunk_method == "semantic":
@@ -308,32 +328,28 @@ def llamacpp_python(
                 print(f"  - {name}")
         else:  # auto
             chunks_list = chunk_text(text, max_tokens=max_chunk_tokens)
-            chunks = [(f"Part {i+1}", chunk) for i, chunk in enumerate(chunks_list)]
+            chunks = [(f"Part {i + 1}", chunk) for i, chunk in enumerate(chunks_list)]
             print(f"Split into {len(chunks)} chunks")
 
         print()
 
         # Process each chunk
-        print("="*60)
+        print("=" * 60)
         print("Processing chunks...")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
         summaries = []
         for i, (section_name, chunk) in enumerate(chunks):
             chunk_tokens = estimate_tokens(chunk)
-            print(f"[{i+1}/{len(chunks)}] {section_name}: ~{chunk_tokens} tokens")
+            print(f"[{i + 1}/{len(chunks)}] {section_name}: ~{chunk_tokens} tokens")
 
-            prompt = f"""Summarize this section of a sequencing QC report. Focus on:
-- Key metrics and statistics
-- Any quality issues or warnings
-- Pass/fail status
-- Critical findings
+            prompt = f"""{effective_chunk_prompt}
 
 Section: {section_name}
 
 {chunk}
 
-Provide a concise summary:"""
+List only the relevant findings from the above section:"""
 
             # Use a smaller max_tokens for chunks, preventing context overflow
             # 1024 tokens is plenty for a concise section summary
@@ -342,7 +358,9 @@ Provide a concise summary:"""
             chunk_max_tokens = min(1024, min(max_tokens, available_chunk_tokens))
 
             try:
-                summary = process_with_llm(llm, prompt, temperature, chunk_max_tokens, system_prompt)
+                summary = process_with_llm(
+                    llm, prompt, temperature, chunk_max_tokens, system_prompt
+                )
                 summaries.append(f"### {section_name}\n{summary}")
                 print(f"  ✓ Generated ({estimate_tokens(summary)} tokens)\n")
             except Exception as e:
@@ -350,9 +368,9 @@ Provide a concise summary:"""
                 summaries.append(f"### {section_name}\n[Error: {str(e)}]")
 
         # Final synthesis
-        print("="*60)
+        print("=" * 60)
         print("Generating final synthesis...")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
         combined_summaries = "\n\n".join(summaries)
         combined_tokens = estimate_tokens(combined_summaries)
@@ -364,15 +382,18 @@ Provide a concise summary:"""
 
             # Group into batches
             batch_size = max(len(summaries) // 3, 1)
-            batches = [summaries[i:i+batch_size] for i in range(0, len(summaries), batch_size)]
+            batches = [
+                summaries[i : i + batch_size]
+                for i in range(0, len(summaries), batch_size)
+            ]
 
             print(f"Batching {len(summaries)} summaries into {len(batches)} groups\n")
 
             meta_summaries = []
             for i, batch in enumerate(batches):
-                print(f"[{i+1}/{len(batches)}] Synthesizing batch {i+1}...")
+                print(f"[{i + 1}/{len(batches)}] Synthesizing batch {i + 1}...")
                 batch_text = "\n\n".join(batch)
-                prompt = f"Synthesize these QC summaries into a brief overview:\n\n{batch_text}"
+                prompt = f"{effective_chunk_prompt}\n\nSynthesize the following findings, keeping only those relevant to the task:\n\n{batch_text}"
 
                 # Calculate safe token limits for meta summaries
                 meta_prompt_tokens = estimate_tokens(system_prompt + prompt)
@@ -380,7 +401,9 @@ Provide a concise summary:"""
                 meta_max_tokens = min(max_tokens, available_meta_tokens)
 
                 try:
-                    meta_summary = process_with_llm(llm, prompt, temperature, meta_max_tokens, system_prompt)
+                    meta_summary = process_with_llm(
+                        llm, prompt, temperature, meta_max_tokens, system_prompt
+                    )
                     meta_summaries.append(meta_summary)
                     print(f"  ✓ Generated ({estimate_tokens(meta_summary)} tokens)\n")
                 except Exception as e:
@@ -390,13 +413,7 @@ Provide a concise summary:"""
             combined_summaries = "\n\n".join(meta_summaries)
             print(f"After reduction: ~{estimate_tokens(combined_summaries)} tokens\n")
 
-        final_prompt = f"""
-
-    { system_prompt }
-
-    {combined_summaries}
-
-    """
+        final_prompt = f"{system_prompt}\n\n{combined_summaries}\n"
 
         with open("final_prompt.log", "w") as log_f:
             log_f.write(final_prompt)
@@ -409,7 +426,9 @@ Provide a concise summary:"""
         final_max_tokens = min(max_tokens, available_final_tokens)
 
         try:
-            final_summary = process_with_llm(llm, final_prompt, temperature, final_max_tokens, system_prompt)
+            final_summary = process_with_llm(
+                llm, final_prompt, temperature, final_max_tokens, system_prompt
+            )
             print(f"✓ Generated ({estimate_tokens(final_summary)} tokens)\n")
         except Exception as e:
             print(f"✗ Error: {e}\n")
@@ -423,7 +442,7 @@ Provide a concise summary:"""
         print("Input fits in context. Processing without chunking.\n")
         messages_json = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": text}
+            {"role": "user", "content": text},
         ]
 
         final_prompt = f"\n\n{system_prompt}\n\n{text}\n\n"
@@ -451,15 +470,15 @@ Provide a concise summary:"""
     with open(output, "w") as f:
         f.write(reply)
 
-    print("="*60)
+    print("=" * 60)
     print(f"✓ Output written to: {output}")
-    print("="*60)
+    print("=" * 60)
 
     # Write HTML output if requested
     if html_output:
         generate_html_output(reply, html_output, llm, sample_name)
         print(f"✓ HTML output written to: {html_output}")
-        print("="*60)
+        print("=" * 60)
 
 
 def main():
@@ -479,50 +498,93 @@ Examples:
 
   # Large context model - use 60% for chunks
   %(prog)s -s report.txt -m model.gguf -c 32768 --chunk_fraction 0.6
-        """
+        """,
     )
 
     # Required
-    parser.add_argument("-s", "--messages", required=True,
-                       help="Plain text input file")
-    parser.add_argument("-m", "--model", required=True,
-                       help="Path to GGUF model file")
+    parser.add_argument("-s", "--messages", required=True, help="Plain text input file")
+    parser.add_argument("-m", "--model", required=True, help="Path to GGUF model file")
 
     # Model parameters
-    parser.add_argument("-t", "--temperature", type=float, default=0.7,
-                       help="Temperature (default: 0.7)")
-    parser.add_argument("-c", "--context", type=int, default=4096,
-                       help="Context size (default: 4096)")
-    parser.add_argument("-g", "--gpu_layers", type=int, default=-1,
-                       help="GPU layers, -1 for all (default: -1)")
-    parser.add_argument("--max_tokens", type=int, default=1024,
-                       help="Max tokens in response (default: 1024)")
-    parser.add_argument("--chat_format", default="chatml",
-                       help="Chat format (default: chatml)")
-    parser.add_argument("--seed", type=int, default=None,
-                       help="Random seed")
+    parser.add_argument(
+        "-t",
+        "--temperature",
+        type=float,
+        default=0.7,
+        help="Temperature (default: 0.7)",
+    )
+    parser.add_argument(
+        "-c", "--context", type=int, default=4096, help="Context size (default: 4096)"
+    )
+    parser.add_argument(
+        "-g",
+        "--gpu_layers",
+        type=int,
+        default=-1,
+        help="GPU layers, -1 for all (default: -1)",
+    )
+    parser.add_argument(
+        "--max_tokens",
+        type=int,
+        default=1024,
+        help="Max tokens in response (default: 1024)",
+    )
+    parser.add_argument(
+        "--chat_format", default="chatml", help="Chat format (default: chatml)"
+    )
+    parser.add_argument("--seed", type=int, default=None, help="Random seed")
 
     # Output
-    parser.add_argument("-o", "--output", default="output.md",
-                       help="Markdown output file (default: output.md)")
-    parser.add_argument("--html_output", default=None,
-                       help="HTML output file for MultiQC custom content (e.g. output_mqc.html). "
-                            "If omitted, no HTML is written.")
-    parser.add_argument("--sample_name", default="Sample",
-                       help="Sample name shown in the HTML badge (default: Sample)")
+    parser.add_argument(
+        "-o",
+        "--output",
+        default="output.md",
+        help="Markdown output file (default: output.md)",
+    )
+    parser.add_argument(
+        "--html_output",
+        default=None,
+        help="HTML output file for MultiQC custom content (e.g. output_mqc.html). "
+        "If omitted, no HTML is written.",
+    )
+    parser.add_argument(
+        "--sample_name",
+        default="Sample",
+        help="Sample name shown in the HTML badge (default: Sample)",
+    )
 
     # Chunking
-    parser.add_argument("--chunk_method", choices=["auto", "semantic"], default="auto",
-                       help="Chunking method (default: auto)")
-    parser.add_argument("--chunk_fraction", type=float, default=0.5,
-                       help="Fraction of context to use per chunk, 0.1-0.9 (default: 0.5)")
-    parser.add_argument("--input_threshold", type=float, default=0.75,
-                       help="Trigger chunking if input exceeds this fraction of context (default: 0.75)")
+    parser.add_argument(
+        "--chunk_method",
+        choices=["auto", "semantic"],
+        default="auto",
+        help="Chunking method (default: auto)",
+    )
+    parser.add_argument(
+        "--chunk_fraction",
+        type=float,
+        default=0.5,
+        help="Fraction of context to use per chunk, 0.1-0.9 (default: 0.5)",
+    )
+    parser.add_argument(
+        "--input_threshold",
+        type=float,
+        default=0.75,
+        help="Trigger chunking if input exceeds this fraction of context (default: 0.75)",
+    )
 
     # System prompt
-    parser.add_argument("--system_prompt",
-                       default="You are an expert in bioinformatics, sequencing technologies, genomics data analysis, and adjacent fields.",
-                       help="System prompt")
+    parser.add_argument(
+        "--system_prompt",
+        default="You are an expert in bioinformatics, sequencing technologies, genomics data analysis, and adjacent fields.",
+        help="System prompt (can be a file path)",
+    )
+    parser.add_argument(
+        "--chunk_prompt",
+        default=None,
+        help="Prompt used for intermediate per-chunk processing. "
+        "If omitted, falls back to --system_prompt. Can be a file path.",
+    )
 
     args = parser.parse_args()
 
@@ -531,6 +593,12 @@ Examples:
         with open(args.system_prompt, "r") as f:
             args.system_prompt = f.read().strip()
         print(f"System prompt loaded from file ({len(args.system_prompt)} chars)")
+
+    # If chunk_prompt is a file path, read its contents
+    if args.chunk_prompt and os.path.isfile(args.chunk_prompt):
+        with open(args.chunk_prompt, "r") as f:
+            args.chunk_prompt = f.read().strip()
+        print(f"Chunk prompt loaded from file ({len(args.chunk_prompt)} chars)")
 
     # Validate chunk_fraction
     if not 0.1 <= args.chunk_fraction <= 0.9:
@@ -552,6 +620,7 @@ Examples:
         chunk_method=args.chunk_method,
         chunk_fraction=args.chunk_fraction,
         input_threshold=args.input_threshold,
+        chunk_prompt=args.chunk_prompt,
     )
 
 
