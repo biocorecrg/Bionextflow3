@@ -4,8 +4,8 @@ process ISOQUANT {
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
-        ? 'https://depot.galaxyproject.org/singularity/isoquant:3.10.0--hdfd78af_0'
-        : 'biocontainers/isoquant:3.10.0--hdfd78af_0'}"
+        ? 'https://depot.galaxyproject.org/singularity/isoquant:4.0.0--pyh106432d_0'
+        : 'biocontainers/isoquant:4.0.0--pyh106432d_0'}"
 
     input:
     tuple val(meta), path(bam), path(index)
@@ -21,7 +21,7 @@ process ISOQUANT {
     def genedb_cmd = annotation ? "--genedb ${annotation}" : ''
 
     """
-    isoquant.py --threads ${task.cpus} \\
+    isoquant --threads ${task.cpus} \\
     --reference ${genome} \\
     ${genedb_cmd} \\
     --bam ${bam} \\
@@ -40,5 +40,5 @@ process ISOQUANT {
 
     output:
     tuple val(meta), path("${meta.id}/*"), emit: out
-    tuple val("${task.process}"), val("isoquant"), eval("isoquant.py --version | cut -d ' ' -f 2"), topic: versions, emit: versions
+    tuple val("${task.process}"), val("isoquant"), eval("isoquant --version | cut -d ' ' -f 2"), topic: versions, emit: versions
 }
