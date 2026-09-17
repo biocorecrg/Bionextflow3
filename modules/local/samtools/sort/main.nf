@@ -8,7 +8,7 @@ process SAMTOOLS_SORT {
         : 'biocontainers/samtools:1.22.1--h96c455f_0'}"
 
     input:
-    tuple val(meta), path(bam)
+    tuple val(meta), path(bam), path(header)
     tuple val(meta2), path(fasta)
     val index_format
     val subsample
@@ -40,11 +40,28 @@ process SAMTOOLS_SORT {
 
     def first_file = bam instanceof List ? bam[0] : bam
     def input_is_cram = first_file.getName().endsWith(".cram")
+    def has_header = header && !header.toString().empty && "${header}" != "[]"
     def reheader_cmd = ""
-    if (input_is_cram) {
+    def index_cmd = ""
+    if (input_is_cram || has_header) {
+        output_file = "${prefix}.${extension}"
+        def append_header = has_header ? "cat - ${header} |" : ""
+        def ur_sed = input_is_cram ? "sed -E 's|UR:[^[:space:]]*/([^[:space:]]+)|UR:./\\\\1|g'" : "cat -"
         reheader_cmd = """
-            samtools reheader -i -c "sed -E 's|UR:[^[:space:]]*/([^[:space:]]+)|UR:./\\\\1|g'" ${prefix}.${extension}
+        samtools reheader -c "${append_header} ${ur_sed}" ${prefix}.${extension} > ${prefix}.reheader.${extension}
+        mv -f ${prefix}.reheader.${extension} ${prefix}.${extension}
         """
+        if (index_format) {
+            if (index_format == "csi") {
+                index_cmd = "samtools index -c ${prefix}.${extension}"
+            }
+            else if (index_format == "bai") {
+                index_cmd = "samtools index -b ${prefix}.${extension}"
+            }
+            else {
+                index_cmd = "samtools index ${prefix}.${extension}"
+            }
+        }
     }
 
     def subsample_cmd = subsample ? "| samtools view -s ${subsample} -b - " : ""
@@ -62,6 +79,7 @@ process SAMTOOLS_SORT {
             -
     
     ${reheader_cmd}
+    ${index_cmd}
     """
 
     stub:

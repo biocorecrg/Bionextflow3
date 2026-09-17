@@ -27,4 +27,12 @@ process DORADO_BASECALL {
     """
     dorado basecaller  --models-directory ./${models} ${args} ./ > ${prefix}.${outext}              
     """
+
+    stub:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def outext = args.contains("--emit-cram") ? "cram" : "bam"
+    """
+    touch ${prefix}.${outext}
+    """
 }

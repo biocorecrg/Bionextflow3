@@ -26,8 +26,12 @@ process DORADO_DOWNLOAD_MODEL {
         	echo "Automatic model download succeeded"
     else 
         	echo "Trying the manual download...";
-	        dorado download --model ${down_pars} --models-directory \$PWD/dorado_models
     fi
+    """
+
+    stub:
+    """
+    mkdir dorado_models
     """
 
     output:
