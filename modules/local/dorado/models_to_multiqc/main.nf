@@ -2,7 +2,7 @@ process MODELS_TO_MULTIQC {
     tag "${meta.id}"
     label 'small'
 
-    container "docker.io/nanoporetech/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e"
+    container "docker://nanoporetech/dorado:sha9809639e07a927bcc0f584dadd5e59674cf59f3f"
 
     input:
     tuple val(meta), path(model_folder)
