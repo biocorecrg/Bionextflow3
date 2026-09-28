@@ -37,5 +37,7 @@ process CLAIR3_RNA {
     output:
     tuple val(meta), path("${prefix}.vcf.gz"), emit: vcf, optional: true
     tuple val(meta), path("${prefix}.vcf.gz.tbi"), emit: tbi, optional: true
+    tuple val(meta), path("${prefix}*.bam"), emit: bam, optional: true
+    tuple val(meta), path("${prefix}*.bam.bai"), emit: bai, optional: true
     tuple val("${task.process}"), val('clair3-rna'), eval('run_clair3_rna --version | sed "s/^Clair3-RNA v//"'), emit: versions, topic: versions
 }

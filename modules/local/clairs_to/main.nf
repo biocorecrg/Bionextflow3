@@ -41,5 +41,7 @@ process CLAIRS_TO {
     tuple val(meta), path("${prefix}.snv.vcf.gz.tbi"), emit: snv_tbi, optional: true
     tuple val(meta), path("${prefix}.indel.vcf.gz"), emit: indel_vcf, optional: true
     tuple val(meta), path("${prefix}.indel.vcf.gz.tbi"), emit: indel_tbi, optional: true
+    tuple val(meta), path("${prefix}*.bam"), emit: bam, optional: true
+    tuple val(meta), path("${prefix}*.bam.bai"), emit: bai, optional: true
     tuple val("${task.process}"), val('clairs-to'), eval('run_clairs_to --version | sed "s/^ClairS-TO v//"'), emit: versions, topic: versions
 }

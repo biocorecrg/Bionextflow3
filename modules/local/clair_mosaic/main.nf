@@ -49,5 +49,7 @@ process CLAIR_MOSAIC {
     tuple val(meta), path("${prefix}snv.vcf.gz.tbi"), emit: snv_tbi, optional: true
     tuple val(meta), path("${prefix}indel.vcf.gz"), emit: indel_vcf, optional: true
     tuple val(meta), path("${prefix}indel.vcf.gz.tbi"), emit: indel_tbi, optional: true
+    tuple val(meta), path("${prefix}*.bam"), emit: bam, optional: true
+    tuple val(meta), path("${prefix}*.bam.bai"), emit: bai, optional: true
     tuple val("${task.process}"), val('clair-mosaic'), eval('run_clair_mosaic --version | sed "s/^Clair-Mosaic v//"'), emit: versions, topic: versions
 }
