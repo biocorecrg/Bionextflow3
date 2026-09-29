@@ -1,0 +1,45 @@
+name: "filter_json"
+description: "Filter and transform a JSON file using a user-specified jq expression"
+keywords:
+  - jq
+  - json
+  - filter
+  - transform
+tools:
+  - "jq":
+      description: "Command-line JSON processor"
+      homepage: "https://jqlang.github.io/jq/"
+      documentation: "https://jqlang.github.io/jq/manual/"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample/run information
+          e.g. [ id:'test' ]
+    - json_file:
+        type: file
+        description: Input JSON file
+        pattern: "*.json"
+  - - filter:
+        type: string
+        description: jq filter expression (e.g. '{ ConversionResults: .ConversionResults, Summary: .Summary }')
+
+output:
+  - json:
+      - meta:
+          type: map
+          description: Groovy Map containing sample/run information
+      - "${prefix}_filtered.json":
+          type: file
+          description: Filtered JSON file
+          pattern: "*_filtered.json"
+  - versions:
+      - versions:
+          type: file
+          description: File containing software versions
+
+authors:
+  - "@biocorecrg"
+  - "@lucacozzuto"
