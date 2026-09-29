@@ -12,10 +12,10 @@ process LLM_SERVICE {
     path user_prompt
 
     output:
-    tuple val(meta), path("${prefix}_llm_report.md")      , emit: report
-    tuple val(meta), path("${prefix}_llm_response.json")  , emit: json
-    tuple val(meta), path("${prefix}_demux_llm_mqc.html") , emit: mqc_html
-    tuple val("${task.process}"), val('python'), eval('python3 --version | sed "s/Python //"'), topic: versions, emit: versions
+    tuple val(meta), path("${prefix}_llm_report.md")      , optional: true, emit: report
+    tuple val(meta), path("${prefix}_llm_response.json")  , optional: true, emit: json
+    tuple val(meta), path("${prefix}_demux_llm_mqc.html") , optional: true, emit: mqc_html
+    tuple val("${task.process}"), val('python'), eval('python3 --version | sed "s/Python //"'), optional: true, topic: versions, emit: versions
 
     when:
     task.ext.when == null || task.ext.when
