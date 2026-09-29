@@ -48,6 +48,14 @@ output:
           type: file
           description: Raw JSON response received from the LLM web service
           pattern: "*_llm_response.json"
+  - mqc_html:
+      - meta:
+          type: map
+          description: Groovy Map containing sample/run information
+      - "${prefix}_demux_llm_mqc.html":
+          type: file
+          description: MultiQC custom content HTML section for demultiplexing LLM evaluation
+          pattern: "*_demux_llm_mqc.html"
   - versions:
       - versions:
           type: file

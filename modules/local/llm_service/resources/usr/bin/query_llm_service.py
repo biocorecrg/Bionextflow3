@@ -6,6 +6,7 @@ llama-server, CRG internal LLM endpoints).
 """
 
 import argparse
+import html
 import json
 import os
 import sys
@@ -69,6 +70,16 @@ def parse_args():
         "-j",
         default="llm_response.json",
         help="Output JSON file path for raw API response (default: llm_response.json).",
+    )
+    parser.add_argument(
+        "--output-mqc",
+        default="",
+        help="Output HTML file path for MultiQC custom content report.",
+    )
+    parser.add_argument(
+        "--sample-name",
+        default="Demultiplexing",
+        help="Sample or run name to display in MultiQC report (default: Demultiplexing).",
     )
     parser.add_argument(
         "--temperature",
@@ -206,9 +217,62 @@ def main():
     with open(args.output_md, "w", encoding="utf-8") as f:
         f.write(content.strip() + "\n")
 
+    # Generate MultiQC custom content HTML if requested
+    if args.output_mqc:
+        generate_multiqc_html(content, args.output_mqc, args.sample_name)
+        print(f"MultiQC section saved to: {args.output_mqc}")
+
     print(f"Successfully received response (HTTP {status_code}).")
     print(f"Report saved to: {args.output_md}")
     print(f"Raw response saved to: {args.output_json}")
+
+
+def generate_multiqc_html(
+    content: str, output_path: str, sample_name: str = "Demultiplexing"
+):
+    """Generate a MultiQC custom content HTML file."""
+    clean_text = content.strip()
+
+    # Determine status
+    is_ok = (
+        "no problems" in clean_text.lower() or "no issues" in clean_text.lower()
+    )
+    badge_color = (
+        "#28a745"
+        if is_ok
+        else "#e0a800"
+        if "warn" in clean_text.lower()
+        else "#dc3545"
+    )
+    status_label = "PASS" if is_ok else "ATTENTION NEEDED"
+
+    escaped_content = html.escape(clean_text)
+
+    # Format body: pretty-print if JSON, otherwise preserve pre-formatted text
+    try:
+        parsed = json.loads(clean_text)
+        pretty_json = html.escape(json.dumps(parsed, indent=2))
+        body_display = f'<pre style="background:#f8f9fa; border:1px solid #e9ecef; border-radius:4px; padding:12px; margin-top:8px; font-size:13px; font-family:Menlo,Monaco,Consolas,monospace;"><code>{pretty_json}</code></pre>'
+    except Exception:
+        body_display = f'<pre style="white-space:pre-wrap; background:#f8f9fa; border:1px solid #e9ecef; border-radius:4px; padding:12px; margin-top:8px; font-size:13px; font-family:Menlo,Monaco,Consolas,monospace;">{escaped_content}</pre>'
+
+    html_content = f"""<!--
+id: 'demultiplexing_llm_evaluation'
+section_name: 'Demultiplexing LLM evaluation'
+description: 'Automated LLM diagnosis of index assignments, undetermined reads, and demultiplexing statistics.'
+-->
+<div style="font-family: inherit; margin: 15px 0;">
+  <div style="display: flex; align-items: center; margin-bottom: 8px;">
+    <h4 style="margin: 0; font-size: 1.05em; font-weight: 600;">{html.escape(sample_name)}</h4>
+    <span style="margin-left: 12px; padding: 2px 8px; border-radius: 4px; font-size: 0.78em; font-weight: bold; color: #fff; background-color: {badge_color};">
+      {status_label}
+    </span>
+  </div>
+  {body_display}
+</div>
+"""
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
 
 
 if __name__ == "__main__":

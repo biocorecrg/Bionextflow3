@@ -12,8 +12,9 @@ process LLM_SERVICE {
     path user_prompt
 
     output:
-    tuple val(meta), path("${prefix}_llm_report.md")    , emit: report
+    tuple val(meta), path("${prefix}_llm_report.md")      , emit: report
     tuple val(meta), path("${prefix}_llm_response.json")  , emit: json
+    tuple val(meta), path("${prefix}_demux_llm_mqc.html") , emit: mqc_html
     tuple val("${task.process}"), val('python'), eval('python3 --version | sed "s/Python //"'), topic: versions, emit: versions
 
     when:
@@ -29,6 +30,8 @@ process LLM_SERVICE {
         --json-file ${json_file} \\
         --output-md ${prefix}_llm_report.md \\
         --output-json ${prefix}_llm_response.json \\
+        --output-mqc ${prefix}_demux_llm_mqc.html \\
+        --sample-name "${prefix}" \\
         ${system_cmd} \\
         ${user_cmd} \\
         ${args}
@@ -39,5 +42,6 @@ process LLM_SERVICE {
     """
     echo "# LLM Stub Report for ${prefix}" > ${prefix}_llm_report.md
     echo '{"choices":[{"message":{"content":"Stub report"}}]}' > ${prefix}_llm_response.json
+    echo "<!-- id: 'demultiplexing_llm_evaluation' section_name: 'Demultiplexing LLM evaluation' --><div>${prefix}: PASS</div>" > ${prefix}_demux_llm_mqc.html
     """
 }
