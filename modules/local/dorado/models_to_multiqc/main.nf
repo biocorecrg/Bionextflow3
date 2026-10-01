@@ -1,6 +1,6 @@
 process MODELS_TO_MULTIQC {
     tag "${meta.id}"
-    label 'small'
+    label 'gpu'
 
     container "docker://nanoporetech/dorado:sha9809639e07a927bcc0f584dadd5e59674cf59f3f"
 
