@@ -1,0 +1,46 @@
+name: "prepare_demux_stats_for_llm"
+description: "Filter demultiplexing statistics and perform deterministic index comparison (revcomp, swap, mismatches) to prepare candidate recoveries for LLM diagnosis."
+keywords:
+  - demultiplexing
+  - bcl2fastq
+  - qc
+  - barcode
+  - llm
+tools:
+  - "python":
+      description: "Python script for parsing demultiplexing statistics and computing barcode similarities"
+      homepage: "https://www.python.org"
+      documentation: "https://docs.python.org/3/"
+      licence: ["PSF-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample/run information
+          e.g. [ id:'test' ]
+    - stats_json:
+        type: file
+        description: Raw bcl2fastq/bcl-convert Stats.json or Aviti RunStats.json
+        pattern: "*.json"
+
+output:
+  - json:
+      - meta:
+          type: map
+          description: Groovy Map containing sample/run information
+      - "${prefix}_demux_stats_llm.json":
+          type: file
+          description: Filtered and enriched JSON containing expected samples, unknown barcodes, and candidate recoveries
+          pattern: "*_demux_stats_llm.json"
+  - versions:
+      - - "${task.process}":
+            type: string
+        - val('python'):
+            type: string
+        - eval('python3 --version | sed "s/Python //"'):
+            type: string
+            topic: versions
+
+authors:
+  - "@biocorecrg"

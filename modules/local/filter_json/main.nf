@@ -2,9 +2,10 @@ process FILTER_JSON {
     tag "${meta.id}"
     label 'process_single'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/jq:1.7--h5bf99c6_0' :
-        'quay.io/biocontainers/jq:1.7--h5bf99c6_0' }"
+ container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/jq:1.8.2'
+        : 'quay.io/biocontainers/jq:1.8.2'}"
+
 
     input:
     tuple val(meta), path(json_file)

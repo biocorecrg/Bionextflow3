@@ -21,11 +21,13 @@ process LLM_SERVICE {
     task.ext.when == null || task.ext.when
 
     script:
+    // v2: formatted MultiQC table output
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     def system_cmd = system_prompt ? "--system-prompt ${system_prompt}" : ""
     def user_cmd = user_prompt ? "--user-prompt ${user_prompt}" : ""
     """
+    echo "Diagnosing demultiplexing stats with LLM..."
     query_llm_service.py \\
         --json-file ${json_file} \\
         --output-md ${prefix}_llm_report.md \\
