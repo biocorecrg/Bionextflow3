@@ -2,7 +2,7 @@ process DORADO_DOWNLOAD_MODEL {
     tag "${meta.id}"
     label 'gpu'
 
-    container "docker.io/nanoporetech/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e"
+    container "docker://nanoporetech/dorado:sha9809639e07a927bcc0f584dadd5e59674cf59f3f"
 
     input:
     tuple val(meta), path(pod5)
@@ -26,8 +26,12 @@ process DORADO_DOWNLOAD_MODEL {
         	echo "Automatic model download succeeded"
     else 
         	echo "Trying the manual download...";
-	        dorado download --model ${down_pars} --models-directory \$PWD/dorado_models
     fi
+    """
+
+    stub:
+    """
+    mkdir dorado_models
     """
 
     output:

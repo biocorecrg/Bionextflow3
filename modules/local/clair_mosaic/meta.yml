@@ -1,0 +1,81 @@
+name: "clair_mosaic"
+description: Clair-Mosaic is a deep-learning-based method for calling low-variant allele fraction (VAF) mosaic small variants from long-read sequencing data.
+keywords:
+  - mosaic
+  - variant
+  - Indel
+  - SNV
+tools:
+  - "clair_mosaic":
+      description: "Clair-Mosaic - a deep-learning method for long-read mosaic small variant calling"
+      homepage: "https://github.com/HKU-BAL/Clair-Mosaic"
+      documentation: "https://github.com/HKU-BAL/Clair-Mosaic"
+      tool_dev_url: "https://github.com/HKU-BAL/Clair-Mosaic"
+      licence:
+        - "BSD-3-clause"
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - bam:
+        type: file
+        description: Sorted BAM file of query sample
+        pattern: "*.{bam}"
+    - bai:
+        type: file
+        description: BAM index file of query sample
+        pattern: "*.bai"
+    - control_bam:
+        type: file
+        description: Sorted BAM file of control sample (optional)
+        pattern: "*.{bam}"
+    - control_bai:
+        type: file
+        description: BAM index file of control sample (optional)
+        pattern: "*.bai"
+    - platform:
+        type: string
+        description: sequencing platform/model configuration (e.g. 'ont_r10_dorado_sup_5khz', 'ilmn', 'hifi_revio')
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - reference:
+        type: file
+        description: reference fasta file
+        pattern: "*.fasta"
+  - - meta3:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - reference_index:
+        type: file
+        description: reference index file
+        pattern: "*.fai"
+output:
+  - snv_vcf:
+      type: file
+      description: SNV VCF file
+      pattern: "*.snv.vcf.gz"
+  - snv_tbi:
+      type: file
+      description: Index for SNV VCF file
+      pattern: "*.snv.vcf.gz.tbi"
+  - indel_vcf:
+      type: file
+      description: Indel VCF file
+      pattern: "*.indel.vcf.gz"
+  - indel_tbi:
+      type: file
+      description: Index for Indel VCF file
+      pattern: "*.indel.vcf.gz.tbi"
+  - versions:
+      type: file
+      description: File containing version information
+      pattern: "versions.yml"
+authors:
+  - "@HKU-BAL"

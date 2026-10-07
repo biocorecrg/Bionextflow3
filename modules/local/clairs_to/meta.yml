@@ -1,0 +1,75 @@
+name: "clairs_to"
+description: ClairS-TO is a deep-learning-based method for calling somatic variants from tumor-only long-read sequencing data.
+keywords:
+  - somatic
+  - tumor-only
+  - variant
+  - cancer
+  - SNV
+  - Indel
+tools:
+  - "clairs_to":
+      description: "ClairS-TO - a deep-learning method for somatic variant calling using tumor-only long-reads"
+      homepage: "https://github.com/HKU-BAL/ClairS-TO"
+      documentation: "https://github.com/HKU-BAL/ClairS-TO"
+      tool_dev_url: "https://github.com/HKU-BAL/ClairS-TO"
+      licence:
+        - "BSD-3-clause"
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - tumor_bam:
+        type: file
+        description: Sorted BAM file of tumor sample
+        pattern: "*.{bam}"
+    - tumor_bai:
+        type: file
+        description: BAM index file of tumor sample
+        pattern: "*.bai"
+    - platform:
+        type: string
+        description: sequencing platform/model configuration (e.g. 'hifi_revio')
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - reference:
+        type: file
+        description: reference fasta file
+        pattern: "*.fasta"
+  - - meta3:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - reference_index:
+        type: file
+        description: reference index file
+        pattern: "*.fai"
+output:
+  - snv_vcf:
+      type: file
+      description: Somatic SNV VCF file containing called variants
+      pattern: "*.snv.vcf.gz"
+  - snv_tbi:
+      type: file
+      description: Index for somatic SNV VCF file
+      pattern: "*.snv.vcf.gz.tbi"
+  - indel_vcf:
+      type: file
+      description: Somatic Indel VCF file containing called variants
+      pattern: "*.indel.vcf.gz"
+  - indel_tbi:
+      type: file
+      description: Index for somatic Indel VCF file
+      pattern: "*.indel.vcf.gz.tbi"
+  - versions:
+      type: file
+      description: File containing version information
+      pattern: "versions.yml"
+authors:
+  - "@HKU-BAL"

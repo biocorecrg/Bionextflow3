@@ -38,10 +38,11 @@ def notify_slack(text, hook) {
     ]
 
     def proc = cmd.execute()
+    def response = proc.text
     proc.waitFor()
 
-    if ("${proc.text}" != "") {
-        log.info("Slack response: ${proc.text}")
+    if (response) {
+        log.info("Slack response: ${response.trim()}")
     }
 
     myFile.delete()
@@ -183,7 +184,9 @@ def revCompDNA(seq) {
 }
 
 def trim_NF_date(nfdate) {
-    def newdate = nfdate.substring(0, nfdate.indexOf(".")).replaceAll("T", " ")
+    if (!nfdate || nfdate == "null") return ""
+    def dotIndex = nfdate.indexOf(".")
+    def newdate = (dotIndex != -1 ? nfdate.substring(0, dotIndex) : nfdate).replaceAll("T", " ")
     return (newdate)
 }
 

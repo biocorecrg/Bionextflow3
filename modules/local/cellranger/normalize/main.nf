@@ -2,7 +2,7 @@ process CELLRANGER_NORM {
     tag "$meta.id"
     label 'process_high'
 
-    container "quay.io/nf-core/cellranger:9.0.1"
+    container "nf-core/cellranger:10.0.0"
 
     input:
     tuple val(meta), path(pairs, name: "my-dir/*")

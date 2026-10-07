@@ -2,7 +2,7 @@ process DORADO_BASECALL {
     tag "$meta.id"
     label 'gpu'
 
-    container "docker.io/nanoporetech/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e"
+    container "docker://nanoporetech/dorado:sha9809639e07a927bcc0f584dadd5e59674cf59f3f"
 
     input:
     tuple val(meta), path(pod5)
@@ -26,5 +26,13 @@ process DORADO_BASECALL {
 
     """
     dorado basecaller  --models-directory ./${models} ${args} ./ > ${prefix}.${outext}              
+    """
+
+    stub:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def outext = args.contains("--emit-cram") ? "cram" : "bam"
+    """
+    touch ${prefix}.${outext}
     """
 }

@@ -1,0 +1,65 @@
+name: "clair3_rna"
+description: Clair3-RNA is a deep-learning-based small variant caller specifically designed for long-read RNA sequencing data.
+keywords:
+  - RNA
+  - variant
+  - Indel
+  - SNV
+tools:
+  - "clair3_rna":
+      description: "Clair3-RNA - a deep-learning method for long-read RNA small variant calling"
+      homepage: "https://github.com/HKU-BAL/Clair3-RNA"
+      documentation: "https://github.com/HKU-BAL/Clair3-RNA"
+      tool_dev_url: "https://github.com/HKU-BAL/Clair3-RNA"
+      licence:
+        - "BSD-3-clause"
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - bam:
+        type: file
+        description: Sorted BAM file of query sample
+        pattern: "*.{bam}"
+    - bai:
+        type: file
+        description: BAM index file of query sample
+        pattern: "*.bai"
+    - platform:
+        type: string
+        description: sequencing platform/model configuration (e.g. 'ont_dorado_drna004', 'hifi_sequel2_minimap2')
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - reference:
+        type: file
+        description: reference fasta file
+        pattern: "*.fasta"
+  - - meta3:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1' ]`
+    - reference_index:
+        type: file
+        description: reference index file
+        pattern: "*.fai"
+output:
+  - vcf:
+      type: file
+      description: VCF file containing called variants
+      pattern: "*.vcf.gz"
+  - tbi:
+      type: file
+      description: Index for VCF file
+      pattern: "*.vcf.gz.tbi"
+  - versions:
+      type: file
+      description: File containing version information
+      pattern: "versions.yml"
+authors:
+  - "@HKU-BAL"

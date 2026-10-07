@@ -2,11 +2,12 @@ process CELLRANGER_COUNT {
     tag "$meta.id"
     label 'process_high'
 
-    container "quay.io/nf-core/cellranger:9.0.1"
+    container "nf-core/cellranger:10.0.0"
 
     input:
     tuple val(meta), path(pairs)
     path  index
+    path  feature_reference
 
     output:
     tuple val(meta), path("**/outs", type: 'dir')   , emit: outs
@@ -18,9 +19,8 @@ process CELLRANGER_COUNT {
     script:
  
     args = task.ext.args ?: ''
- 
- 
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def feature_ref_arg = feature_reference ? "--feature-ref=${feature_reference}" : ""
     """
     
     if [ ! -f ${prefix}_S1_L001_R1_001.fastq.gz ] && [ ! -f ${prefix}_S1_L001_R2_001.fastq.gz ]; then
@@ -32,6 +32,7 @@ process CELLRANGER_COUNT {
                    --transcriptome=${index} \
                    --fastqs=./ \
                    --sample=${prefix} \
+                   ${feature_ref_arg} \
                    --localcores=${task.cpus} \
                    --localmem=${task.memory.toGiga()} 
                    
