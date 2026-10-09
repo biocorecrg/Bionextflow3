@@ -1,0 +1,45 @@
+name: "index_reporting"
+description: "Format the JSON response of an LLM web service (saved by llm_service) as a MultiQC custom content HTML section"
+keywords:
+  - llm
+  - multiqc
+  - reporting
+tools:
+  - "python":
+      description: "Standard Python script converting an LLM response into MultiQC custom content"
+      homepage: "https://www.python.org"
+      documentation: "https://docs.python.org/3/"
+      licence: ["PSF-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample/run information
+          e.g. [ id:'test' ]
+    - llm_response_json:
+        type: file
+        description: Raw JSON response saved by llm_service
+        pattern: "*_llm_response.json"
+  - - input_json:
+        type: file
+        description: Optional structured input JSON (e.g. CandidateRecoveries) used to build richer tables
+        pattern: "*.json"
+
+output:
+  - mqc_html:
+      - meta:
+          type: map
+          description: Groovy Map containing sample/run information
+      - "${prefix}_index_reporting_mqc.html":
+          type: file
+          description: MultiQC custom content HTML section
+          pattern: "*_index_reporting_mqc.html"
+  - versions:
+      - versions:
+          type: file
+          description: File containing software versions
+
+authors:
+  - "@biocorecrg"
+  - "@lucacozzuto"
