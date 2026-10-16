@@ -1,6 +1,6 @@
 process NANORMS_BASEQ {
     tag "${meta.id} vs ${meta2.id}"
-    label 'process_medium'
+    label 'process_high'
 
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
         ? 'docker.io/lpryszcz/nanorms4:v4.0a2'
@@ -18,7 +18,11 @@ process NANORMS_BASEQ {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}-vs-${meta2.id}"
     """
-      	/opt/app/src/bam2baseQ.py ${args} -i ${alnfileA} ${alnfileB} -t ${task.cpus} | gzip -c > ${prefix}_baseQ.bed.gz
+    run_bam2baseQ.py \\
+        ${args} \\
+        -i ${alnfileA} ${alnfileB} \\
+        -t ${task.cpus} \\
+        -o ${prefix}_baseQ.bed.gz
     """
 
     output:
