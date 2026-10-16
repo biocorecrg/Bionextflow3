@@ -36,7 +36,10 @@ process SNPSIFT_ANNOTATE {
     def final_command = commands.join(" \\\n        | ") + " > ${prefix}.vcf"
     """
     mkdir -p \$PWD/tmp
-    export JAVA_OPTS="-Djava.io.tmpdir=\$PWD/tmp"
+    export JAVA_OPTS="-Djava.io.tmpdir=\$PWD/tmp -XX:-UsePerfData"
+    export JAVA_TOOL_OPTIONS="-XX:-UsePerfData"
+    export TMPDIR=$PWD/tmp
+
     ${final_command}
     """
 
