@@ -38,7 +38,7 @@ process SNPSIFT_ANNOTATE {
     mkdir -p \$PWD/tmp
     export JAVA_OPTS="-Djava.io.tmpdir=\$PWD/tmp -XX:-UsePerfData"
     export JAVA_TOOL_OPTIONS="-XX:-UsePerfData"
-    export TMPDIR=$PWD/tmp
+    export TMPDIR=\$PWD/tmp
 
     ${final_command}
     """
