@@ -94,6 +94,8 @@ epinano_processing <- function(sample_file, ivt_file, initial_position, final_po
   } else {
     plotting_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
     significant_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
+    #No data in the region: return empty coverage too (it was undefined -> "object 'coverage_data' not found")
+    coverage_data <- data.frame(Position = integer(), Coverage = numeric())
     
   }
 
@@ -171,6 +173,8 @@ bedmethyl_processing <- function(sample_file, initial_position, final_position, 
   } else {
     plotting_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
     significant_positions <- data.frame(Reference= character(), Position=integer(), Difference=double(), Feature=character())
+    #No data in the region: return empty coverage too (it was undefined -> "object 'coverage_data' not found")
+    coverage_data <- data.frame(Position = integer(), Coverage = numeric())
     
   }
 

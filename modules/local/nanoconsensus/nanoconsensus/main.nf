@@ -20,9 +20,24 @@ process NANOCONSENSUS {
     def prefix = task.ext.prefix ?: meta.id
     def bed_opt = mod_annotation ? "--bed ${mod_annotation}" : ''
 
+    // Epinano tables are genome-wide (hundreds of MB gzipped) and NanoConsensus.R loads
+    // them entirely with read.csv (~15 GB RAM per region): keep only the rows of the
+    // analysed region (#Ref == chr, start <= pos <= end) before calling it.
     """
-	NanoConsensus.R -Epi_Sample ${Epi_Sample} \
-	-Epi_IVT ${Epi_IVT} \
+	region_epinano() {
+		if [ -s "\$1" ]; then
+			gzip -cdf "\$1" | awk -F, -v chr="${chrName}" -v s=${chrStart} -v e=${chrEnd} \
+				'NR==1 || (\$1==chr && \$2>=s && \$2<=e)' > "\$2"
+			echo "\$2"
+		else
+			echo "\$1"
+		fi
+	}
+	EPI_SAMPLE=\$(region_epinano ${Epi_Sample} region_epi_sample.csv)
+	EPI_IVT=\$(region_epinano ${Epi_IVT} region_epi_ivt.csv)
+
+	NanoConsensus.R -Epi_Sample \${EPI_SAMPLE} \
+	-Epi_IVT \${EPI_IVT} \
 	-BaseQ ${baseQ} \
 	-nanoRMS_SI ${nanorms_si} -nanoRMS_DT ${nanorms_dt} -nanoRMS_SD ${nanorms_sd}\
 	-chr ${chrName} \
