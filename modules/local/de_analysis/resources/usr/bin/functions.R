@@ -575,19 +575,45 @@ create_pca_data <- function(vsd, condition, pcnum, colors) {
 	pca_data <- p[["data"]]
 	pca_variance <- p[["variance"]]
 
-	# Generate distinct colors dynamically for the factor levels of the condition column 
-	unique_vals<- unique(pca_data[[condition]])
+	# Generate distinct colors dynamically for the factor levels of the condition column
+	cond_vals <- as.character(pca_data[[condition]])
+	cond_vals[is.na(cond_vals)] <- "NA"
+	unique_vals <- unique(cond_vals)
 	num_unique <- length(unique_vals)
 
-	# Generate distinct colors dynamically
-	color_palette <- colors # Creates distinct colors
+	# Generate distinct colors dynamically (recycle if more levels than palette)
+	color_palette <- rep_len(colors, num_unique)
 
 	# Create a lookup table
-	color_map <- setNames(color_palette[1:num_unique], unique_vals)
+	color_map <- setNames(color_palette, unique_vals)
 
 	# Add a new column 'color' to pca_data
-	pca_data$color <- color_map[pca_data[[condition]]]
+	pca_data$color <- unname(color_map[cond_vals])
 
+	# Include all additional sample annotation columns from colData(vsd)
+	coldata_df <- as.data.frame(colData(vsd))
+	matched_idx <- match(as.character(pca_data$name), rownames(coldata_df))
+	reserved_cols <- c("file", "sample_name", "sizeFactor", "replaceable", "name", "group", "color", colnames(pca_data))
+	candidate_cols <- setdiff(colnames(coldata_df), reserved_cols)
+	candidate_cols <- candidate_cols[!grepl("^PC[0-9]+$", candidate_cols)]
+
+	sample_names_norm <- trimws(as.character(pca_data$name))
+	extra_kept <- character(0)
+	for (col_name in candidate_cols) {
+		col_vals <- coldata_df[[col_name]][matched_idx]
+		col_vals_norm <- trimws(as.character(col_vals))
+		non_na <- !is.na(col_vals_norm) & !is.na(sample_names_norm)
+		if (any(non_na) && all(col_vals_norm[non_na] == sample_names_norm[non_na])) {
+			next
+		}
+		pca_data[[col_name]] <- col_vals
+		extra_kept <- c(extra_kept, col_name)
+	}
+
+	pc_cols <- grep("^PC[0-9]+$", colnames(pca_data), value = TRUE)
+	ordered_cols <- unique(c("group", condition, extra_kept, "name", pc_cols, "color"))
+	ordered_cols <- c(ordered_cols, setdiff(colnames(pca_data), ordered_cols))
+	pca_data <- pca_data[, ordered_cols, drop = FALSE]
 
 	return(list(data = pca_data, variance = pca_variance))
 }
