@@ -75,12 +75,36 @@ def upload_to_lims() {
     }
 }
 
+// Short Nextflow error report: the header (process, exit status), the end of
+// "Command error" (task stderr, where modules print the reason) and the work dir.
+// The rendered script and stdout, which come first in the report, are dropped.
+// Reports without "Command error" (e.g. config errors) are kept, cut at maxLength.
+def compactErrorReport(report, maxLength = 2000) {
+    def text = report ? report.toString() : ""
+    def errIdx = text.indexOf("Command error:")
+    if (errIdx < 0) {
+        return text.take(maxLength)
+    }
+    def cmdIdx = text.indexOf("Command executed:")
+    def header = (cmdIdx >= 0 && cmdIdx < errIdx ? text.substring(0, cmdIdx) : "").trim()
+    def rest = text.substring(errIdx)
+    def wdIdx = rest.indexOf("Work dir:")
+    def error = (wdIdx >= 0 ? rest.substring(0, wdIdx) : rest).trim()
+    def workdir = wdIdx >= 0 ? rest.substring(wdIdx).readLines().take(2).join("\n").trim() : ""
+    def budget = maxLength - header.size() - workdir.size() - 4
+    if (error.size() > budget) {
+        def label = "Command error:\n  ...\n"
+        error = label + error.takeRight(Math.max(budget - label.size(), 0))
+    }
+    return [header, error, workdir].findAll { part -> part }.join("\n\n").take(maxLength)
+}
+
 def update_lims_status(user, apikey, lims_base, pipe_id) {
     def mystatus = workflow.success ? 'SU' : 'FA'
     def myFile = File.createTempFile('notify', '.json')
     def payload = [status: mystatus]
     if (!workflow.success && workflow.errorReport) {
-        payload.error_report = workflow.errorReport.take(2000)
+        payload.error_report = compactErrorReport(workflow.errorReport)
     }
     myFile.text = groovy.json.JsonOutput.toJson(payload)
 
