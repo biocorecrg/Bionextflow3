@@ -39,7 +39,18 @@ process BASES2FASTQ {
         $args \\
         $run_dir \\
         $prefix
-    
+
+    # Fail with a clear message (exit 3) when no sample FASTQ has reads
+    found=0
+    for f in \$(find $prefix/Samples -path '*/Project_*' -name '*_R1*.fastq.gz' ! -name '*PhiX*'); do
+        if [ -n "\$(zcat "\$f" | head -c1)" ]; then found=1; break; fi
+    done
+    if [ "\$found" -eq 0 ]; then
+        echo "No sample FASTQs generated for ${meta.id}: all reads are unassigned." >&2
+        echo "Check the index combinations in the run manifest against \$PWD/$prefix/UnassignedSequences.csv" >&2
+        exit 3
+    fi
+
     mv $prefix/Samples/Project_* $prefix/
     mv $prefix/Samples/Unassigned/*.fastq.gz $prefix/
 

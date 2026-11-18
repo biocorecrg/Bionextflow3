@@ -78,7 +78,11 @@ def upload_to_lims() {
 def update_lims_status(user, apikey, lims_base, pipe_id) {
     def mystatus = workflow.success ? 'SU' : 'FA'
     def myFile = File.createTempFile('notify', '.json')
-    myFile.text = """{"status": "${mystatus}"}"""
+    def payload = [status: mystatus]
+    if (!workflow.success && workflow.errorReport) {
+        payload.error_report = workflow.errorReport.take(2000)
+    }
+    myFile.text = groovy.json.JsonOutput.toJson(payload)
 
     def cmd = [
         "curl",

@@ -66,6 +66,17 @@ process BCL2FASTQ {
         --sample-sheet ${samplesheet} \\
         --processing-threads ${task.cpus}
 
+    # Fail with a clear message (exit 3) when no sample FASTQ has reads
+    found=0
+    for f in \$(find ${meta.id} -name '*_S[1-9]*_R[12]_00?.fastq.gz'); do
+        if [ -n "\$(zcat "\$f" | head -c1)" ]; then found=1; break; fi
+    done
+    if [ "\$found" -eq 0 ]; then
+        echo "No sample FASTQs generated for ${meta.id}: all reads are undetermined." >&2
+        echo "Check the index combinations in ${samplesheet} against UnknownBarcodes in \$PWD/${meta.id}/Stats/Stats.json" >&2
+        exit 3
+    fi
+
     cp -r ${input_dir}/InterOp .
 
     """
