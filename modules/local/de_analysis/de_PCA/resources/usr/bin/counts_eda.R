@@ -52,6 +52,151 @@ create_pca_data <- function(vsd, condition, pcnum, colors) {
 	return(list(data = pca_data, variance = pca_variance))
 }
 
+# Export selected gene expression values (long TSV) for interactive MultiQC visualization
+export_genes_expression <- function(expr_mat, dds, genes_desc, genes_raw, out_file, colors, condition) {
+	genes_req <- trimws(as.character(genes_raw))
+	genes_req <- genes_req[nzchar(genes_req)]
+	if (length(genes_req) == 0) {
+		return(invisible(NULL))
+	}
+
+	g_id_raw <- as.character(genes_desc$gene.id)
+	g_name_raw <- as.character(genes_desc$gene.name)
+	gene_name_norm <- normalize_gene_name(g_name_raw)
+	gene_id_norm <- normalize_gene_name(g_id_raw)
+	gene_id_novers_norm <- normalize_gene_name(sub("\\..*$", "", g_id_raw))
+	expr_rownames <- rownames(expr_mat)
+
+	matched_ids <- character(0)
+	matched_names <- character(0)
+	missing_queries <- character(0)
+
+	for (q in genes_req) {
+		q_norm <- normalize_gene_name(q)
+		if (!nzchar(q_norm)) {
+			next
+		}
+		idx <- which(gene_name_norm == q_norm & (g_id_raw %in% expr_rownames))
+		if (length(idx) == 0) {
+			idx <- which((gene_id_norm == q_norm | gene_id_novers_norm == q_norm) & (g_id_raw %in% expr_rownames))
+		}
+		if (length(idx) == 0) {
+			missing_queries <- c(missing_queries, q)
+			next
+		}
+		for (i in idx) {
+			gid <- g_id_raw[i]
+			if (!(gid %in% matched_ids)) {
+				gname <- trimws(g_name_raw[i])
+				if (is.na(gname) || !nzchar(gname)) {
+					gname <- gid
+				}
+				matched_ids <- c(matched_ids, gid)
+				matched_names <- c(matched_names, gname)
+			}
+		}
+	}
+
+	if (length(matched_ids) == 0) {
+		warning(paste0("Gene names: [", paste(genes_req, collapse = ", "), "] NOT found or filtered out in ", out_file))
+		return(invisible(NULL))
+	}
+	message(paste0("Found genes for ", out_file, ": [", paste(matched_names, collapse = ", "), "]"))
+	if (length(missing_queries) > 0) {
+		warning(paste0("Requested genes not found or filtered out by min_count: [", paste(missing_queries, collapse = ", "), "]"))
+	}
+
+	sub_mat <- expr_mat[matched_ids, , drop = FALSE]
+	dup_names <- unique(matched_names[duplicated(matched_names)])
+	display_names <- ifelse(matched_names %in% dup_names, paste0(matched_names, " (", matched_ids, ")"), matched_names)
+
+	sample_ids <- colnames(sub_mat)
+	coldata_df <- as.data.frame(colData(dds))
+	matched_sidx <- match(sample_ids, rownames(coldata_df))
+
+	if (condition %in% colnames(coldata_df)) {
+		cond_vals <- as.character(coldata_df[[condition]][matched_sidx])
+	} else {
+		cond_vals <- rep("NA", length(sample_ids))
+	}
+	cond_vals[is.na(cond_vals) | !nzchar(trimws(cond_vals))] <- "NA"
+
+	unique_vals <- unique(cond_vals)
+	color_palette <- rep_len(colors, length(unique_vals))
+	color_map <- setNames(color_palette, unique_vals)
+	sample_colors <- unname(color_map[cond_vals])
+
+	reserved_cols <- c("gene_id", "gene_name", "sample", "group", "value", "color", "file", "sample_name", "sizeFactor", "replaceable")
+	candidate_cols <- setdiff(colnames(coldata_df), reserved_cols)
+	candidate_cols <- candidate_cols[!grepl("^PC[0-9]+$", candidate_cols)]
+	candidate_cols <- unique(c(intersect(condition, candidate_cols), candidate_cols))
+
+	sample_names_norm <- trimws(as.character(sample_ids))
+	annot_list <- list()
+	for (col_name in candidate_cols) {
+		col_vals <- coldata_df[[col_name]][matched_sidx]
+		col_vals_norm <- trimws(as.character(col_vals))
+		non_na <- !is.na(col_vals_norm) & !is.na(sample_names_norm)
+		if (any(non_na) && all(col_vals_norm[non_na] == sample_names_norm[non_na])) {
+			next
+		}
+		clean_vals <- ifelse(is.na(col_vals) | !nzchar(col_vals_norm), "NA", gsub("[\t\r\n]+", " ", col_vals_norm))
+		annot_list[[col_name]] <- clean_vals
+	}
+
+	n_g <- length(matched_ids)
+	n_s <- length(sample_ids)
+	vals <- as.numeric(t(sub_mat))
+	vals <- ifelse(is.finite(vals), round(vals, 4), NA_real_)
+
+	out_df <- data.frame(
+		gene_id = rep(matched_ids, each = n_s),
+		gene_name = rep(display_names, each = n_s),
+		sample = rep(sample_ids, times = n_g),
+		group = rep(cond_vals, times = n_g),
+		value = vals,
+		color = rep(sample_colors, times = n_g),
+		stringsAsFactors = FALSE
+	)
+	for (col_name in names(annot_list)) {
+		out_df[[col_name]] <- rep(annot_list[[col_name]], times = n_g)
+	}
+
+	write.table(out_df, file = out_file, sep = "\t", quote = FALSE, row.names = FALSE)
+	invisible(out_df)
+}
+
+create_genes_expression_tables <- function(dds, gene_list, groups, desc_genes, prefix = "", colors, condition, vsd = NULL) {
+	genes_raw <- unlist(strsplit(gene_list, ","))
+	if (is.null(vsd)) {
+		vsd <- makeVST(dds, FALSE)
+	}
+	vst_mat <- assay(vsd)
+
+	norm <- counts(dds, normalized = TRUE)
+	norm_log <- log2(norm + 1)
+
+	pfx <- if (nzchar(prefix)) paste0(prefix, "_") else ""
+	export_genes_expression(
+		expr_mat = vst_mat,
+		dds = dds,
+		genes_desc = desc_genes,
+		genes_raw = genes_raw,
+		out_file = paste0(pfx, "vst_genes_expression.tsv"),
+		colors = colors,
+		condition = condition
+	)
+	export_genes_expression(
+		expr_mat = norm_log,
+		dds = dds,
+		genes_desc = desc_genes,
+		genes_raw = genes_raw,
+		out_file = paste0(pfx, "log2_deseq_norm_genes_expression.tsv"),
+		colors = colors,
+		condition = condition
+	)
+}
+
 
 
 # Load common pars
@@ -66,7 +211,7 @@ parser$add_argument("-dtrans", "--Desc_Tx", type="character", default="tx2gene.c
 parser$add_argument("-strand", "--Strand_id", type="integer", default=4, help="Strand to analyze, 2: unstranded, 3: forward, 4 reverse (ONLY FOR STAR) [default %(default)s]")
 parser$add_argument("-batch", "--add_batch", action='store_true', help="Remove batch effect with Combat-seq using the column batch in desc file")
 parser$add_argument("-pcnum", "--Number_principal_components", type="integer", default=4, help="Number of principal components (one for each column) data to extract to the data table, [default %(default)s]")
-parser$add_argument("-genes", "--Gene_list", type="character", default="", help="Comma separated list of genes (max 10), for boxplot gene expression between conditions (e.g: -genes Slc26a4,Cd276,Cyth4)")
+parser$add_argument("-genes", "--Gene_list", type="character", default="", help="Comma separated list of genes for interactive gene expression plots between conditions (e.g: -genes Slc26a4,Cd276,Cyth4)")
 parser$add_argument("-color", "--PCA_color",type="character", default="", help="Column in desc.txt to be used for coloring PCA plot")
 parser$add_argument("-gsea", "--GSEA_files", action="store_true", help="Creates cls (samples grouped by condition column) and normalized counts table for GSEA analysis")
 
@@ -135,14 +280,14 @@ sample_clustering_matrix <- sample_clustering(vsd)
 write.table(sample_clustering_matrix, file="Sample_Clustering_matrix.tsv", sep="\t", quote=FALSE, row.names=TRUE, col.names=NA)
 
 
-##################################  Gene list expression boxplots for vst and log2(deseq-normalized) ##################################
+##################################  Gene list expression tables for vst and log2(deseq-normalized + 1) ##################################
 
-# Extended color palette for boxplots to support up to 50 groups
+# Extended color palette for gene expression plots
 boxplot_colors <- c("black","#1C9BCD","magenta","#E69F00","cyan","red","#14db1e","#dad60e","blue","darkred","#09e0d5","darkgreen","#bf3dbf","#8b836e","#4f0e29")
 
 if (args$Desc_genes != "" & args$Gene_list != "") {
 
-create_genes_boxplots(dds, args$Gene_list, groups, desc, prefix = "", colors = boxplot_colors, condition = condition)
+	create_genes_expression_tables(dds, args$Gene_list, groups, desc, prefix = "", colors = boxplot_colors, condition = condition, vsd = vsd)
 
 }
 
@@ -185,11 +330,11 @@ if (args$add_batch & ("batch" %in% colnames(colData(dds)))) {
 	write.table(sample_clustering_matrix, file="batch_Sample_Clustering_matrix.tsv", sep="\t", quote=FALSE, row.names=TRUE, col.names=NA)
 
 
-	####### Gene list expression boxplots for vst and log2(deseq-normalized)
+	####### Gene list expression tables for vst and log2(deseq-normalized + 1)
 
 	if (args$Desc_genes != "" & args$Gene_list != "") {
 
-		create_genes_boxplots(dds, args$Gene_list, groups, desc, prefix = "batch", colors = boxplot_colors, condition = condition)
+		create_genes_expression_tables(se2, args$Gene_list, groups, desc, prefix = "batch", colors = boxplot_colors, condition = condition, vsd = vsd)
 	}
 
 

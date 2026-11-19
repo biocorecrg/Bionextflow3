@@ -23,6 +23,7 @@ process DE_PCA {
     path ("*Sample_Clustering_matrix.tsv"), emit: sample_clustering
 
     // Plot outputs (optional)
+    path ("*genes_expression.tsv"), emit: genes_expression, optional: true
     path ("_vst*boxplot.png"), emit: vst_genes_boxplot, optional: true
     path ("_log2_deseq_norm*boxplot.png"), emit: norm_genes_boxplot, optional: true
     path ("batch_vst*boxplot.png"), emit: batch_vst_genes_boxplot, optional: true
