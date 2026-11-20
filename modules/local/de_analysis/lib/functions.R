@@ -137,23 +137,36 @@ makeDDSFromMatrix <- function(input, desc, field) {
 }
 
 
+# Read a samplesheet or legacy desc.txt (auto-detect TSV vs CSV)
+readSampleTable <- function(desc_exp) {
+	first_line <- readLines(desc_exp, n = 1, warn = FALSE)
+	sep <- if (length(first_line) > 0 && grepl("\t", first_line, fixed = TRUE)) "\t" else ","
+	read.table(desc_exp, sep = sep, header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, comment.char = "")
+}
+
 #Make coldata for DESEq2
 makeColData <- function(desc_exp, fn) {
-	desc_data<-read.table(desc_exp, sep="\t", header=T)
-	
-	coldata<-desc_data[match(fn, desc_data$file),]
+	desc_data <- readSampleTable(desc_exp)
+	id_col <- if ("sample" %in% names(desc_data)) "sample" else if ("file" %in% names(desc_data)) "file" else names(desc_data)[1]
+	ids <- trimws(as.character(desc_data[[id_col]]))
+	idx <- match(fn, ids)
+	if (any(is.na(idx))) {
+		stop(paste("Samples missing from", desc_exp, ":", paste(fn[is.na(idx)], collapse = ", ")))
+	}
+	coldata <- desc_data[idx, , drop = FALSE]
 
-	# Remove whitespace
-	desc_data$condition <- trimws(desc_data$condition)
+	# Drop read-path columns so local paths or iRODS URIs never enter PCA/DESeq2/plots
+	drop_cols <- c("fastq_1", "fastq_2", "file_1", "file_2", "fastq", "file_path", "read_1", "read_2")
+	coldata <- coldata[, setdiff(names(coldata), drop_cols), drop = FALSE]
 
-	# Convert to factor
-	desc_data$condition <- as.factor(desc_data$condition)
+	if ("condition" %in% names(coldata)) {
+		coldata$condition <- as.factor(trimws(as.character(coldata$condition)))
+	}
 
-	row.names(coldata)<-fn
+	row.names(coldata) <- fn
 	if ("group" %in% names(coldata)) {
 		stop("****** 'group' cannot be in the names of the description file, please change it ******")
 	}
-	all(rownames(coldata) == colnames(counts))
 	return(coldata)
 }
 
@@ -440,7 +453,8 @@ gene_expression_yaml <- function(norm_counts, genes, desc, intgroup = "condition
   )
   
   ## ---- Build file → condition lookup ----
-  condition_map <- setNames(desc[[intgroup]], desc$file)
+  id_col <- if ("sample" %in% names(desc)) "sample" else if ("file" %in% names(desc)) "file" else names(desc)[1]
+  condition_map <- setNames(desc[[intgroup]], desc[[id_col]])
   
   ## ---- Build YAML structure ----
   yaml_list <- list()
@@ -595,7 +609,7 @@ create_pca_data <- function(vsd, condition, pcnum, colors) {
 	# Include all additional sample annotation columns from colData(vsd)
 	coldata_df <- as.data.frame(colData(vsd))
 	matched_idx <- match(as.character(pca_data$name), rownames(coldata_df))
-	reserved_cols <- c("file", "sample_name", "sizeFactor", "replaceable", "name", "group", "color", colnames(pca_data))
+	reserved_cols <- c("file", "sample", "fastq_1", "fastq_2", "file_1", "file_2", "fastq", "file_path", "read_1", "read_2", "sample_name", "sizeFactor", "replaceable", "name", "group", "color", colnames(pca_data))
 	candidate_cols <- setdiff(colnames(coldata_df), reserved_cols)
 	candidate_cols <- candidate_cols[!grepl("^PC[0-9]+$", candidate_cols)]
 
@@ -694,7 +708,7 @@ export_genes_expression <- function(expr_mat, dds, genes_desc, genes_raw, out_fi
 	color_map <- setNames(color_palette, unique_vals)
 	sample_colors <- unname(color_map[cond_vals])
 
-	reserved_cols <- c("gene_id", "gene_name", "sample", "group", "value", "color", "file", "sample_name", "sizeFactor", "replaceable")
+	reserved_cols <- c("gene_id", "gene_name", "sample", "group", "value", "color", "file", "fastq_1", "fastq_2", "file_1", "file_2", "fastq", "file_path", "read_1", "read_2", "sample_name", "sizeFactor", "replaceable")
 	candidate_cols <- setdiff(colnames(coldata_df), reserved_cols)
 	candidate_cols <- candidate_cols[!grepl("^PC[0-9]+$", candidate_cols)]
 	candidate_cols <- unique(c(intersect(condition, candidate_cols), candidate_cols))
@@ -798,10 +812,10 @@ write.table(x, "gsea_deseq2_normalized_counts.txt", quote=F, col.names=T, row.na
 
 ########## write cls file for GSEA for cell condition
 
-sampleTable <- read.table(args$Desc_exp, sep="\t", header=T)
+sampleTable <- readSampleTable(desc)
 
 # Extract values from the condition column
-conditions     <- sampleTable$condition
+conditions     <- if (condition %in% names(sampleTable)) sampleTable[[condition]] else sampleTable$condition
 ordered_conditions <- sort(conditions)
 n_samples      <- length(ordered_conditions)
 unique_conds   <- unique(ordered_conditions)   # preserves order of first appearance

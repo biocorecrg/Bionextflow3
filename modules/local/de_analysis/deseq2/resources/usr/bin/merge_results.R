@@ -46,7 +46,7 @@ topall <- data.frame(ids = desc$gene.id)
 
 ## metadata
 
-metadata <- read.csv(args$Desc_exp, sep="\t", header=T)
+metadata <- readSampleTable(args$Desc_exp)
 
 # Get results for all comparisons combinations if not provided by the user
 

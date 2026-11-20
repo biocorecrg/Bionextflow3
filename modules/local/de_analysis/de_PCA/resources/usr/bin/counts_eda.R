@@ -27,7 +27,7 @@ create_pca_data <- function(vsd, condition, pcnum, colors) {
 	# Include all additional sample annotation columns from colData(vsd)
 	coldata_df <- as.data.frame(colData(vsd))
 	matched_idx <- match(as.character(pca_data$name), rownames(coldata_df))
-	reserved_cols <- c("file", "sample_name", "sizeFactor", "replaceable", "name", "group", "color", colnames(pca_data))
+	reserved_cols <- c("file", "sample", "fastq_1", "fastq_2", "file_1", "file_2", "fastq", "file_path", "read_1", "read_2", "sample_name", "sizeFactor", "replaceable", "name", "group", "color", colnames(pca_data))
 	candidate_cols <- setdiff(colnames(coldata_df), reserved_cols)
 	candidate_cols <- candidate_cols[!grepl("^PC[0-9]+$", candidate_cols)]
 
@@ -126,7 +126,7 @@ export_genes_expression <- function(expr_mat, dds, genes_desc, genes_raw, out_fi
 	color_map <- setNames(color_palette, unique_vals)
 	sample_colors <- unname(color_map[cond_vals])
 
-	reserved_cols <- c("gene_id", "gene_name", "sample", "group", "value", "color", "file", "sample_name", "sizeFactor", "replaceable")
+	reserved_cols <- c("gene_id", "gene_name", "sample", "group", "value", "color", "file", "fastq_1", "fastq_2", "file_1", "file_2", "fastq", "file_path", "read_1", "read_2", "sample_name", "sizeFactor", "replaceable")
 	candidate_cols <- setdiff(colnames(coldata_df), reserved_cols)
 	candidate_cols <- candidate_cols[!grepl("^PC[0-9]+$", candidate_cols)]
 	candidate_cols <- unique(c(intersect(condition, candidate_cols), candidate_cols))
